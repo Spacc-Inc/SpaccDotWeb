@@ -1,0 +1,35 @@
+<script src="Spacc.Web.js"></script>
+
+<script id="Meta" type="text/json">{
+	"Name": "The Testing",
+	"Description": "Useful for doing The Testing",
+	"Uri": "https://example.com/Testing"
+}</script>
+
+<script module="Main">
+//import { SpaccDotWeb as Spacc } from "./Spacc.Web.js";
+
+const Spacc = SpaccDotWeb;
+Spacc.AppInit();
+
+//Spacc.AppSetup({
+//	Name: "The Testing",
+//	Description: "Useful for doing The Testing",
+//	Uri: "https://example.com/Testing",
+//});
+
+Spacc.Select('#App').innerHTML = `
+<p>1234</p>
+<button >Log</button>
+`;
+
+Spacc.Select('#App button').onclick = () => {
+	Spacc.Select('#App').innerHTML += `<xmp>${document.documentElement.outerHTML}</xmp>`;
+	/*console.log(document.documentElement.outerHTML)*/
+};
+</script>
+
+<script module="Testing">
+//Spacc.Select('#App').innerHTML += `<p><b>Testing is complete.</b></p>`;
+Spacc.Select('#App').Insert(Spacc.Create('p', { innerHTML: `<b>Testing is complete.</b>` }));
+</script>

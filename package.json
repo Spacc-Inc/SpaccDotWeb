@@ -1,0 +1,11 @@
+{
+	"name": "SpaccDotWeb",
+	"version": "indev",
+	"devDependencies": {
+		"@babel/cli": "^7.23.0",
+		"@babel/core": "^7.23.0",
+		"@babel/preset-env": "^7.22.20",
+		"@xmldom/xmldom": "^0.8.10",
+		"jsdom": "^22.1.0"
+	}
+}
