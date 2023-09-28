@@ -3,17 +3,18 @@ const SpaccDotWeb = ((args) => { //////////////////////////////////////////////
 
 let windowObject, documentObject;
 let Lib = {};
-//let isDomVirtual = false;
 let isBuildingApp = false;
+let __scriptname;
 
 const platformIsNode = (typeof module === 'object' && typeof module.exports === 'object');
 const platformIsBrowser = (typeof window !== 'undefined' && typeof window.document !== 'undefined');
 
 if (platformIsNode) {
 	Lib.fs = require('fs');
+	Lib.crypto = require('crypto');
 	Lib.childProcess = require('child_process');
 	Lib.jsdom = require('jsdom');
-	//isDomVirtual = true;
+	__scriptname = __filename.split('/').slice(-1)[0];
 	windowObject = new Lib.jsdom.JSDOM().window;
 };
 
@@ -30,29 +31,47 @@ const SpaccDotWeb = ((args) => { //////////////////////////////////////////////
 let SpaccDotWeb = {};
 
 if (platformIsNode) {
-	SpaccDotWeb.AppBuildStandalone = (fileIndex) => {
+	SpaccDotWeb.AppBuildStandalone = (opts) => {
 		isBuildingApp = true;
-		fileIndex ||= 'index.html';
+		opts ||= {};
+		opts.Page ||= 'index.html';
+		opts.Modules && !opts.Modules.includes('Main') && (opts.Modules = [...opts.Modules, 'Main']);
 
-		//isDomVirtual = true;
-
-		Lib.fs.mkdirSync(`${__dirname}/Build/${fileIndex}.tmp`, { recursive: true });
-		let htmlIndex = Lib.fs.readFileSync(fileIndex, 'utf8');
+		Lib.fs.mkdirSync(`${__dirname}/Build/App-${opts.Page}`, { recursive: true });
+		let htmlIndex = Lib.fs.readFileSync(opts.Page, 'utf8');
 
 		windowObject = new Lib.jsdom.JSDOM(htmlIndex).window;
 		documentObject = windowObject.document;
 
-		DomSetup();//SpaccDotWeb.AppInit();
+		DomSetup(opts.Modules);
+		Lib.fs.writeFileSync(`${__dirname}/Build/App-${opts.Page}/Full.html`, `<!DOCTYPE html>${documentObject.documentElement.outerHTML}`);
 
 		isBuildingApp = false;
-		Lib.fs.writeFileSync(`${__dirname}/Build/${fileIndex}`, `<!DOCTYPE html>${documentObject.documentElement.outerHTML}`);
+	};
+
+	SpaccDotWeb.LibBuild = () => {
+		Lib.fs.mkdirSync(`${__dirname}/Build/Assets.tmp`, { recursive: true });
+		let uptodate = true;
+		const compiledPath = `${__dirname}/Build/SpaccDotWeb.js`;
+		const minifiedPath = `${__dirname}/Build/SpaccDotWeb.min.js`;
+		const hashPath = `${__dirname}/Build/SpaccDotWeb.js.hash`;
+		const hashOld = (Lib.fs.existsSync(hashPath) && Lib.fs.readFileSync(hashPath, 'utf8'));
+		const hashNew = Lib.crypto.createHash('sha256').update(Lib.fs.readFileSync(__filename, 'utf8')).digest('hex');
+		if (!Lib.fs.existsSync(compiledPath) || !Lib.fs.existsSync(minifiedPath) || !(hashOld === hashNew)) {
+			uptodate = false;
+			Lib.fs.writeFileSync(hashPath, hashNew);
+			Lib.fs.writeFileSync(compiledPath, Lib.childProcess.execSync(`cat "${__filename}" | npx babel -f "${__scriptname}"`));
+			Lib.fs.writeFileSync(minifiedPath, Lib.childProcess.execSync(`cat "${compiledPath}" | npx uglifyjs`));
+		};
+		uptodate && console.log('Library is up-to-date.');
+		return { compiledText: Lib.fs.readFileSync(compiledPath, 'utf8'), minified: Lib.fs.readFileSync(minifiedPath, 'utf8') };
 	};
 };
 
 SpaccDotWeb.AppInit = function AppInit(){
 	try {
 		DomSetup();
-	} catch(err) { console.log(err) }
+	} catch(err) { console.log(err) };
 };
 
 //SpaccDotWeb.Make = () => {};
@@ -73,7 +92,7 @@ SpaccDotWeb.Select = (query) => {
 
 const AppMetaGet = () => JSON.parse(SpaccDotWeb.Select('#Meta').innerHTML);
 
-const DomMakeBase = () => {
+const DomMakeBase = (Modules) => {
 	const meta = AppMetaGet();
 
 	const htmlFrags = {
@@ -84,14 +103,21 @@ const DomMakeBase = () => {
 
 	let scripts = '';
 
-	if (isBuildingApp/*isDomVirtual*/) {
-		const SpaccMinified = Lib.childProcess.execSync(`cat "${__filename}" | npx babel -f "${__filename.split('/').slice(-1)[0]}"`);
+	if (isBuildingApp) {
+		scripts += `<scr`+`ipt src="http://cdn.jsdelivr.net/npm/core-js-bundle/minified.min.js"></scr`+`ipt>`;
 		scripts += `<scr`+`ipt src="https://cdn.jsdelivr.net/npm/core-js-bundle/minified.min.js"></scr`+`ipt>`;
-		scripts += `<scr`+`ipt>${SpaccMinified}</scr`+`ipt>`;
-		//scripts += `<scr`+`ipt src="https://example.com/Spacc.Web.min.js"></scr`+`ipt>`;
-		//scripts += `<scr`+`ipt>${Lib.fs.readFileSync(__filename, 'utf8')}</scr`+`ipt>`;
+		scripts += `<scr`+`ipt>${SpaccDotWeb.LibBuild().minified}</scr`+`ipt>`;
 		for (const elem of documentObject.querySelectorAll('script[module]')) {
-			scripts += elem.outerHTML;
+			if (!Modules || (Modules && Modules.includes(elem.getAttribute('module')))) {
+				if (elem.getAttribute('src')) {
+					scripts += `<scr`+`ipt src="${elem.getAttribute('src')}"></scr`+`ipt>`
+				} else {
+					const tmpHash = Lib.crypto.createHash('sha256').update(elem.innerHTML).digest('hex');
+					const tmpPath = `${__dirname}/Build/Assets.tmp/${tmpHash}.js`;
+					Lib.fs.writeFileSync(tmpPath, elem.innerHTML);
+					scripts += `<scr`+`ipt>${Lib.childProcess.execSync(`cat "${tmpPath}" | npx babel -f "${tmpHash}.js" | npx uglifyjs`)}</scr`+`ipt>`;
+				};
+			};
 		};
 	};
 
@@ -102,18 +128,17 @@ const DomMakeBase = () => {
 			${htmlFrags.Title}
 			${htmlFrags.Description}
 			${htmlFrags.Uri}
-			<!--<scr ipt src="https://example.com/index.js"></scr ipt>-->
 		`,
 		body: `<div id="App"></div>${scripts}`,
 	};
 };
 
-const DomSetup = () => {
+const DomSetup = (Modules) => {
 	const doctypeNew = documentObject.implementation.createHTMLDocument().doctype;
 	windowObject.document.doctype
 		? documentObject.replaceChild(doctypeNew, documentObject.doctype)
 		: documentObject.insertBefore(doctypeNew, documentObject.childNodes[0]);
-	const domBase = DomMakeBase();
+	const domBase = DomMakeBase(Modules);
 	documentObject.write(domBase.head + domBase.body);
 	documentObject.head.innerHTML = domBase.head;
 	documentObject.body.innerHTML = domBase.body;
