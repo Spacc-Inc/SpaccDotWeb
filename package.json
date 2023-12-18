@@ -2,7 +2,7 @@
 	"name": "SpaccDotWeb",
 	"version": "indev",
 	"scripts": {
-		"build:lib": "node ./SpaccDotWeb.js 'SpaccDotWeb.LibBuild()'",
+		"build:lib": "sh -c \"node ./SpaccDotWeb.js 'SpaccDotWeb.LibBuild()'\"",
 		"build:clear": "rm -rf ./Build"
 	},
 	"devDependencies": {

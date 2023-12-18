@@ -1,0 +1,17 @@
+image: alpine:latest
+
+before_script: |
+  apk update
+  apk add nodejs npm
+
+pages:
+  stage: deploy
+  script: |
+    npm install
+    npm run build:lib
+    node ./SpaccDotWeb.js 'SpaccDotWeb.AppBuildStandalone({ Page: "Example.html" })'
+    mkdir -p ./public
+    mv ./Build/* ./public
+  artifacts:
+    paths:
+    - public

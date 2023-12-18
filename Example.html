@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<script src="SpaccDotWeb.js" module="SpaccDotWeb"></script>
+
+<script module="Meta">({
+	"Name": "The Testing",
+	"Description": "Useful for doing The Testing",
+	"Uri": "https://example.com/Testing",
+})</script>
+
+<script module="Main">
+	const Spacc = SpaccDotWeb.AppInit();
+
+	Spacc.Select('#App').innerHTML = `
+		<p>Click to log!</p>
+		<button>Log</button>
+	`;
+
+	Spacc.Select('#App button').onclick = () => {
+		Spacc.Select('#App').innerHTML += `<xmp style="white-space: break-spaces;">
+			${(document.documentElement.outerHTML)}
+		</xmp>`;
+	};
+</script>
+
+<script module="Testing">
+	Spacc.Select('#App').Insert(Spacc.Create('p', { innerHTML: `<b>The auto-testing is complete.</b>` }));
+</script>
+
+<style>
+	body {
+		background: lightgray;
+	}
+</style>
