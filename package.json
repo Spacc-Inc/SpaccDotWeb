@@ -2,13 +2,15 @@
 	"name": "SpaccDotWeb",
 	"version": "indev",
 	"scripts": {
-		"build:lib": "sh -c \"node ./SpaccDotWeb.js 'SpaccDotWeb.LibBuild()'\"",
+		"build:lib": "sh ./BuildLib.sh",
 		"build:clear": "rm -rf ./Build"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.23.0",
 		"@babel/core": "^7.23.0",
 		"@babel/preset-env": "^7.22.20",
+		"core-js": "^3.35.0",
+		"dialog-polyfill": "^0.5.6",
 		"jsdom": "^22.1.0",
 		"uglify-js": "^3.17.4"
 	}

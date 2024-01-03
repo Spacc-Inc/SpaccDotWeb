@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <script src="SpaccDotWeb.js" module="SpaccDotWeb"></script>
 
+<!-- -->
 <script module="Meta">({
 	"Name": "The Testing",
 	"Description": "Useful for doing The Testing",
 	"Uri": "https://example.com/Testing",
 })</script>
+<!-- -->
 
 <script module="Main">
 	const Spacc = SpaccDotWeb.AppInit();
@@ -23,7 +25,7 @@
 </script>
 
 <script module="Testing">
-	Spacc.Select('#App').Insert(Spacc.Create('p', { innerHTML: `<b>The auto-testing is complete.</b>` }));
+	Spacc.Select('#App').appendChild(Spacc.Create('p', { innerHTML: `<b>The auto-testing is complete.</b>` }));
 </script>
 
 <style>
