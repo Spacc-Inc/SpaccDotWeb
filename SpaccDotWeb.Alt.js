@@ -6,29 +6,36 @@
 		return SpaccDotWeb;
 	}
 
-	SpaccDotWeb.Sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+	SpaccDotWeb.Sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 	SpaccDotWeb.RequireScript = (src, type) => {
-		const scriptElem = document.createElement('script');
-		scriptElem.src = src;
-		document.body.appendChild(scriptElem);
+		return new Promise((resolve) => {
+			const scriptElem = document.createElement('script');
+			//if (type) {
+			//	scriptElem.type = type;
+			//}
+			scriptElem.onload = (event) => {
+				resolve(event);
+			};
+			scriptElem.src = src;
+			document.body.appendChild(scriptElem);
+		});
 	}
 
 	SpaccDotWeb.ShowModal = async (params) => {
 	// TODO: delete dialogs from DOM after use (garbage collect)?
 		if (!window.HTMLDialogElement && !window.dialogPolyfill) {
-			SpaccDotWeb.RequireScript('https://googlechrome.github.io/dialog-polyfill/dist/dialog-polyfill.js');
-		}
-		while (!window.HTMLDialogElement && !window.dialogPolyfill) {
-			await SpaccDotWeb.Sleep(50);
+			await SpaccDotWeb.RequireScript('https://googlechrome.github.io/dialog-polyfill/dist/dialog-polyfill.js');
 		}
 		let output;
 		if (typeof(params) === 'string') {
 			params = { label: params }
 		}
+		//params.deleteOnClose ||= true;
 		const modal = document.createElement('dialog');
+		const label = (params.label || params.text);
 		modal.innerHTML = `
-			<p>${params.label || params.text || ''}</p>
+			${label ? `<p>${label}</p>` : ''}
 			${params.extraHTML || ''}
 			<button name="cancel">🔙️ Cancel</button>
 		`;
