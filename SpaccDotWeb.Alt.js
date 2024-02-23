@@ -21,6 +21,7 @@
 			document.body.appendChild(scriptElem);
 		});
 	}
+	// .RequireScripts = (...) => {}
 
 	SpaccDotWeb.ShowModal = async (params) => {
 	// TODO: delete dialogs from DOM after use (garbage collect)?
