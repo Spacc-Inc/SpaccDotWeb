@@ -1,16 +1,16 @@
 <!DOCTYPE html><html><head><!--
 			--><meta charset="utf-8"/><!--
 			--><meta name="viewport" content="width=device-width, initial-scale=1.0"/><!--
+			--><title>Example</title><!--
 			--><link rel="stylesheet" href="/static/Example.css"/><!--
 		--></head><body><!--
 			--><div id="transition"></div><!--
 			--><div id="app">
-			<script>
-				window.process = null;
-				window.require = () => window.SpaccDotWebServer;
-				window.resFilesData = { "Example.css": "data:text/css;base64,Ym9keSB7CgliYWNrZ3JvdW5kLWNvbG9yOiBsaWdodGdyYXk7Cgljb2xvcjogYmxhY2s7Cn0KCmgyIHsKCXBvc2l0aW9uOiByZWxhdGl2ZTsKCXRvcDogM2VtOwoJcm90YXRlOiAxNWRlZzsKCWNvbG9yOiBwdXJwbGU7Cn0K" };
-			</script>
 			<script src="./SpaccDotWeb.Server.js"></script>
+			<script>
+				window.require = () => window.SpaccDotWebServer;
+				window.SpaccDotWebServer.resFilesData = { "Example.css": "data:text/css;base64,Ym9keSB7CgliYWNrZ3JvdW5kLWNvbG9yOiBsaWdodGdyYXk7Cgljb2xvcjogYmxhY2s7Cn0KCmgyIHsKCXdpZHRoOiBtYXgtY29udGVudDsKCXJvdGF0ZTogMTVkZWc7Cgljb2xvcjogRGVlcFBpbms7Cn0K" };
+			</script>
 			<script src="./Example.Server.js"></script>
 		</div><!--
 		--></body></html>
