@@ -1,3 +1,4 @@
 *.tmp
-Build/*
-node_modules/*
+/Build/*
+/node_modules/*
+/Example.Server.html
