@@ -1,5 +1,9 @@
 /* TODO:
  * built-in logging
+ * configure to embed linked styles and scripts into the HTML output, or just link to file
+ * relative URL root
+ * utility functions for rewriting url query parameters?
+ * fix hash navigation to prevent no-going-back issue
  * other things listed in the file
  */
 (() => {
@@ -11,6 +15,7 @@ let fs, path, mime, multipart;
 
 const setup = (globalOptions={}) => {
 	allOpts.global = globalOptions;
+	//allOpts.global.appName ||= 'Untitled SpaccDotWeb App';
 	allOpts.global.staticPrefix ||= '/static/';
 	allOpts.global.staticFiles ||= [];
 	allOpts.global.linkStyles ||= [];
@@ -50,6 +55,7 @@ const initServer = (serverOptions) => {
 		allOpts.server.port ||= 3000;
 		allOpts.server.address ||= '127.0.0.1';
 		allOpts.server.maxBodyUploadSize = (parseInt(allOpts.server.maxBodyUploadSize) || undefined);
+		allOpts.server.handleHttpHead ||= true;
 		require('http').createServer(handleRequest).listen(allOpts.server.port, allOpts.server.address);
 	}
 	if (envIsBrowser) {
@@ -71,11 +77,17 @@ const writeStaticHtml = () => {
 	const fileName = (process.mainModule.filename.split('.').slice(0, -1).join('.') + '.html');
 	fs.writeFileSync(fileName, allOpts.global.htmlPager(`
 		<script src="./${path.basename(__filename)}"></script>
+		<script src="./SpaccDotWeb.Alt.js"></script>
 		<script>
-			window.require = () => window.SpaccDotWebServer;
+			window.require = () => {
+				window.require = async (src, type) => {
+					await SpaccDotWeb.RequireScript((src.startsWith('./') ? src : ('node_modules/' + src)), type);
+				};
+				return window.SpaccDotWebServer;
+			};
 			window.SpaccDotWebServer.staticFilesData = { ${allOpts.global.staticFiles.map((file) => {
 				const filePath = (process.mainModule.filename.split(path.sep).slice(0, -1).join(path.sep) + path.sep + file);
-				return `"${file}": "data:${mime.lookup(filePath)};base64,${fs.readFileSync(filePath).toString('base64')}"`;
+				return `"${file}":"data:${mime.lookup(filePath)};base64,${fs.readFileSync(filePath).toString('base64')}"`;
 			})} };
 		</script>
 		<script src="./${path.basename(process.mainModule.filename)}"></script>
@@ -89,22 +101,23 @@ const handleRequest = async (request, response={}) => {
 	const context = {
 		request,
 		response,
-		urlSections: request.url.slice(1).toLowerCase().split('?')[0].split('/'),
-		urlParameters: Object.fromEntries(new URLSearchParams(request.url.split('?')?.slice(1)?.join('?'))),
+		urlPath: request.url.slice(1).toLowerCase().split('?')[0],
+		urlQuery: request.url.split('?')?.slice(1)?.join('?'),
 		bodyParameters: (['POST', 'PUT', 'PATCH'].includes(request.method) && await parseBodyParams(request)), // TODO which other methods need body?
 		getCookie: (cookie) => getCookie(request, cookie),
 		setCookie: (cookie) => setCookie(response, cookie),
 		//storageApi: (key,value, opts) => storageApi(key, value, opts),
 		renderPage: (content, title, opts) => renderPage(response, content, title, opts),
 		redirectTo: (url) => redirectTo(response, url),
+		clientLanguages: parseclientLanguages(request),
 	};
-	// client transitions
-	if (envIsBrowser) {
-		const transitionElement = document.querySelector(allOpts.server.transitionElement);
-		if (transitionElement) {
-			transitionElement.hidden = false;
-			transitionElement.style.display = 'block';
-		}
+	context.urlSections = context.urlPath.split('/');
+	context.urlParameters = Object.fromEntries(new URLSearchParams(context.urlQuery));
+	setClientTransition(true);
+	// TODO check if this is respected even when using renderPage?
+	const handlingHttpHead = (allOpts.server.handleHttpHead && request.method === 'HEAD')
+	if (handlingHttpHead) {
+		request.method = 'GET';
 	}
 	// serve static files
 	if (envIsNode && request.method === 'GET' && request.url.toLowerCase().startsWith(allOpts.global.staticPrefix)) {
@@ -132,7 +145,7 @@ const handleRequest = async (request, response={}) => {
 		for (const name in result.headers) {
 			response.setHeader(name, result.headers[name]);
 		}
-		response.end(result.body);
+		response.end(!handlingHttpHead && result.body);
 	}
 };
 
@@ -158,7 +171,7 @@ const requestCheckFunction = (check, context) => {
 
 const renderPage = (response, content, title, opts={}) => {
 	// TODO titles and things
-	// TODO status code could need to be different in different situations and so should be set accordingly?
+	// TODO status code could need to be different in different situations and so should be set accordingly? (but we don't handle it here?)
 	if (envIsNode) {
 		response.setHeader('content-type', 'text/html; charset=utf-8');
 		response.end((opts.htmlPager || allOpts.global.htmlPager)(content, title));
@@ -188,13 +201,17 @@ const renderPage = (response, content, title, opts={}) => {
 				});
 			};
 		}
-		const transitionElement = document.querySelector(allOpts.server.transitionElement);
-		if (transitionElement) {
-			transitionElement.hidden = true;
-			transitionElement.style.display = 'none';
-		}
+		setClientTransition(false);
 	};
 };
+
+const setClientTransition = (status) => {
+	let transitionElement;
+	if (envIsBrowser && (transitionElement = document.querySelector(allOpts.server.transitionElement))) {
+		transitionElement.hidden = !status;
+		transitionElement.style.display = (status ? 'block' : 'none');
+	}
+}
 
 const redirectTo = (response, url) => {
 	if (envIsNode) {
@@ -217,14 +234,18 @@ const parseBodyParams = async (request) => {
 				if (request.body.length > allOpts.server.maxBodyUploadSize) {
 					request.connection?.destroy();
 					// TODO handle this more gracefully? maybe an error callback or something?
-				};
+				}
 			});
 			await new Promise((resolve) => request.on('end', () => resolve()));
 		}
 		const [contentMime, contentEnc] = request.headers['content-type'].split(';');
 		if (envIsNode && contentMime === 'application/x-www-form-urlencoded') {
 			for (const [key, value] of (new URLSearchParams(request.body.toString())).entries()) {
-				params[key] = value;
+				if (key in params) {
+					params[key] = [].concat(params[key], value);
+				} else {
+					params[key] = value;
+				}
 			}
 		} else if (envIsNode && contentMime === 'multipart/form-data') {
 			for (const param of multipart.parse(request.body, contentEnc.split('boundary=')[1])) {
@@ -240,7 +261,7 @@ const parseBodyParams = async (request) => {
 	} catch (err) {
 		console.log(err);
 		request.connection?.destroy();
-	};
+	}
 };
 
 const getCookie = (request, name) => {
@@ -275,7 +296,9 @@ const setCookie = (response, cookie) => {
 };
 
 // try to use the built-in cookie API, fallback to a Storage-based wrapper in case it fails (for example on file:///)
-const clientCookieApi = (envIsBrowser && (document.cookie || (!document.cookie && (document.cookie = '_=_') && document.cookie) ? (set) => (set ? (document.cookie = set) : document.cookie) : (set) => {
+const clientCookieApi = (envIsBrowser && (document.cookie || (!document.cookie && (document.cookie = '_=_') && document.cookie)
+? (set) => (set ? (document.cookie = set) : document.cookie)
+: (set) => {
 	const gid = allOpts.global.appName; // TODO: introduce a conf field that is specifically a GID for less potential problems?
 	// also, TODO: what to do when no app name or any id is set?
 	if (set) {
@@ -307,6 +330,21 @@ const clientCookieApi = (envIsBrowser && (document.cookie || (!document.cookie &
 		return items.slice(0, -1);
 	}
 }));
+
+const parseclientLanguages = (request) => {
+	if (envIsNode) {
+		const languages = [];
+		const languageTokens = request.headers['accept-language']?.split(',');
+		if (languageTokens) {
+			for (const language of languageTokens) {
+				languages.push(language.split(';')[0].trim());
+			}
+		}
+		return languages;
+	} else if (envIsBrowser) {
+		return (navigator.languages || [navigator.language /* || navigator.userLanguage */]);
+	}
+};
 
 const exportObj = { envIsNode, envIsBrowser, setup };
 if (envIsNode) {

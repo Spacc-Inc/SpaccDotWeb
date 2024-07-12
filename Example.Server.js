@@ -21,8 +21,10 @@ if (SpaccDotWebServer.envIsNode && ['dump', 'html'].includes(process.argv[2])) {
 		// port: 3000,
 		// address: '127.0.0.1',
 		// maxBodyUploadSize: null,
+		// handleHttpHead: true,
 		// appElement: 'div#app',
 		// transitionElement: 'div#transition',
+		// cookieInUrl: 'spaccdotweb-cookie',
 
 		// endpoints are defined by a discriminator and an action
 		endpoints: [
