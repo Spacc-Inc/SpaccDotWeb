@@ -6,9 +6,9 @@ const server = SpaccDotWebServer.setup({
 	// staticFiles: [],
 	linkStyles: [ 'Example.css' ],
 	// linkScripts: [],
-	// pageTitler: (title) => `...`,
-	// appPager: (content, title) => `...`,
-	// htmlPager: (content, title) => `...`,
+	// pageTitler: (title, opts={}) => `...`,
+	// appPager: (content, title, opts={}) => `...`,
+	// htmlPager: (content, title, opts={}) => `...`,
 });
 
 if (SpaccDotWebServer.envIsNode && ['dump', 'html'].includes(process.argv[2])) {
@@ -19,12 +19,13 @@ if (SpaccDotWebServer.envIsNode && ['dump', 'html'].includes(process.argv[2])) {
 		// defaultResponse: { code: 500, headers: {} },
 		// endpointsFalltrough: false,
 		// port: 3000,
-		// address: '127.0.0.1',
+		address: '0.0.0.0',
 		// maxBodyUploadSize: null,
 		// handleHttpHead: true,
 		// appElement: 'div#app',
 		// transitionElement: 'div#transition',
-		// cookieInUrl: 'spaccdotweb-cookie',
+		// metaCookie: 'spaccdotweb-meta',
+		// cookieInUrl: 'spaccdotweb-cookie', // not (yet) implemented
 
 		// endpoints are defined by a discriminator and an action
 		endpoints: [
@@ -46,9 +47,8 @@ if (SpaccDotWebServer.envIsNode && ['dump', 'html'].includes(process.argv[2])) {
 					}
 
 					// a short sleep so that we can test client transitions
-					await (new Promise(r => setTimeout(r, 1500)));
+					await (new Promise(resolve => setTimeout(resolve, 1500)));
 				}
-				// TODO: setCookie should update the current cookie context, so that following getCookie calls return updated data
 				const content = `
 					<h2>Test</h2>
 					<p>This page was rendered at ${Date()}.</p>

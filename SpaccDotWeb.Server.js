@@ -1,9 +1,12 @@
 /* TODO:
  * built-in logging
  * configure to embed linked styles and scripts into the HTML output, or just link to file
+ * handle linkScripts to insert in the HTML, like linkStyles
+ * differentiate between client-only, served-only, and both-mode scripts?
  * relative URL root
  * utility functions for rewriting url query parameters?
- * fix hash navigation to prevent no-going-back issue
+ * fix hash navigation to prevent no-going-back issue (possible?)
+ * finish polishing the cookie API
  * other things listed in the file
  */
 (() => {
@@ -12,6 +15,11 @@ const envIsNode = (typeof module === 'object' && typeof module.exports === 'obje
 const envIsBrowser = (typeof window !== 'undefined' && typeof window.document !== 'undefined');
 const allOpts = {};
 let fs, path, mime, multipart;
+
+// 2 years is a good default duration for a system cookie
+// they say Firefox limits to that; Chromium forces expiry after 400 days
+// (https://http.dev/set-cookie#max-age)
+const cookieMaxAge2Years = (2 * 365 * 24 * 60 * 60);
 
 const setup = (globalOptions={}) => {
 	allOpts.global = globalOptions;
@@ -26,18 +34,18 @@ const setup = (globalOptions={}) => {
 			allOpts.global.staticFiles.push(item);
 		}
 	}
-	allOpts.global.pageTitler ||= (title) => `${title || ''}${title && allOpts.global.appName ? ' — ' : ''}${allOpts.global.appName || ''}`,
-	allOpts.global.appPager ||= (content, title) => content,
+	allOpts.global.pageTitler ||= (title, opts={}) => `${title || ''}${title && allOpts.global.appName ? ' — ' : ''}${allOpts.global.appName || ''}`,
+	allOpts.global.appPager ||= (content, title, opts={}) => content,
 	allOpts.global.htmlPager ||= (content, title, opts={}) => `<!DOCTYPE html><html><head><!--
 		--><meta charset="utf-8"/><!--
 		--><meta name="viewport" content="width=device-width, initial-scale=1.0"/><!--
-		--><title>${(opts.pageTitler || allOpts.global.pageTitler)(title)}</title><!--
+		--><title>${(opts.pageTitler || allOpts.global.pageTitler)(title, opts)}</title><!--
 		-->${allOpts.global.linkStyles.map((item) => {
 			return `<link rel="stylesheet" href="${allOpts.global.staticFiles.includes(item) ? (allOpts.global.staticPrefix + item) : item}"/>`;
 		}).join('')}<!--
 	--></head><body><!--
 		--><div id="transition"></div><!--
-		--><div id="app">${(opts.appPager || allOpts.global.appPager)(content, title)}</div><!--
+		--><div id="app">${(opts.appPager || allOpts.global.appPager)(content, title, opts)}</div><!--
 	--></body></html>`;
 	const result = {};
 	result.initServer = (serverOptions={}) => initServer(serverOptions);
@@ -51,6 +59,7 @@ const initServer = (serverOptions) => {
 	allOpts.server = serverOptions;
 	allOpts.server.defaultResponse ||= { code: 500, headers: {} };
 	allOpts.server.endpointsFalltrough ||= false;
+	allOpts.server.metaCookie ||= 'spaccdotweb-meta';
 	if (envIsNode) {
 		allOpts.server.port ||= 3000;
 		allOpts.server.address ||= '127.0.0.1';
@@ -101,20 +110,24 @@ const handleRequest = async (request, response={}) => {
 	const context = {
 		request,
 		response,
+		cookieString: (envIsNode ? (request.headers.cookie || '') : envIsBrowser ? clientCookieApi() : ''),
+		clientLanguages: parseclientLanguages(request),
 		urlPath: request.url.slice(1).toLowerCase().split('?')[0],
 		urlQuery: request.url.split('?')?.slice(1)?.join('?'),
 		bodyParameters: (['POST', 'PUT', 'PATCH'].includes(request.method) && await parseBodyParams(request)), // TODO which other methods need body?
-		getCookie: (cookie) => getCookie(request, cookie),
-		setCookie: (cookie) => setCookie(response, cookie),
 		//storageApi: (key,value, opts) => storageApi(key, value, opts),
-		renderPage: (content, title, opts) => renderPage(response, content, title, opts),
 		redirectTo: (url) => redirectTo(response, url),
-		clientLanguages: parseclientLanguages(request),
 	};
+	context.renderPage = (content, title, opts) => renderPage(response, content, title, { ...opts, context });
 	context.urlSections = context.urlPath.split('/');
 	context.urlParameters = Object.fromEntries(new URLSearchParams(context.urlQuery));
+	context.cookieData = parseCookieString(context.cookieString);
+	context.getCookie = (cookieName) => (cookieName ? context.cookieData[cookieName]?.value : context.cookieString);
+	context.setCookie = (cookie, cookieValue, cookieFlags) => (context.cookieString = setCookie(context.cookieData, response, cookie, cookieValue, cookieFlags));
+	if (allOpts.server.metaCookie) {
+		context.renewCookie = (cookieName) => renewCookie(context.getCookie, context.setCookie, cookieName);
+	}
 	setClientTransition(true);
-	// TODO check if this is respected even when using renderPage?
 	const handlingHttpHead = (allOpts.server.handleHttpHead && request.method === 'HEAD')
 	if (handlingHttpHead) {
 		request.method = 'GET';
@@ -174,11 +187,11 @@ const renderPage = (response, content, title, opts={}) => {
 	// TODO status code could need to be different in different situations and so should be set accordingly? (but we don't handle it here?)
 	if (envIsNode) {
 		response.setHeader('content-type', 'text/html; charset=utf-8');
-		response.end((opts.htmlPager || allOpts.global.htmlPager)(content, title));
+		response.end((opts.htmlPager || allOpts.global.htmlPager)(content, title, opts));
 	}
 	if (envIsBrowser) {
-		document.title = (opts.pageTitler || allOpts.global.pageTitler)(title);
-		document.querySelector(allOpts.server.appElement).innerHTML = ((opts.appPager || allOpts.global.appPager)(content, title));
+		document.title = (opts.pageTitler || allOpts.global.pageTitler)(title, opts);
+		document.querySelector(allOpts.server.appElement).innerHTML = ((opts.appPager || allOpts.global.appPager)(content, title, opts));
 		for (const srcElem of document.querySelectorAll(`[src^="${allOpts.global.staticPrefix}"]`)) {
 			srcElem.src = window.SpaccDotWebServer.staticFilesData[srcElem.getAttribute('src')];
 		}
@@ -264,35 +277,133 @@ const parseBodyParams = async (request) => {
 	}
 };
 
-const getCookie = (request, name) => {
-	let cookies;
-	if (envIsNode) {
-		cookies = (request.headers?.cookie || '');
-	} else if (envIsBrowser) {
-		cookies = clientCookieApi();
+const makeCookieString = (cookieData) => {
+	let cookieString = '';
+	for (const cookieName in cookieData) {
+		cookieString += `; ${cookieName}=${cookieData[cookieName].value}`;
 	}
-	if (name) {
-		// get a specific cookie
-		for (const cookie of (cookies?.split(';') || [])) {
-			// TODO ensure this is good, whitespace must be removed at the start but idk about the end
-			const [key, ...rest] = cookie.trim().split('=');
-			if (key === name) {
-				return rest.join('=');
-			}
+	return cookieString.slice(2);
+}
+
+const parseCookieString = (cookieString) => {
+	const cookieData = {};
+	if (!cookieString) {
+		return cookieData;
+	}
+	for (const cookie of cookieString.split('; ')) {
+		const [key, ...rest] = cookie.split('=');
+		cookieData[key] = { value: rest.join('=') };
+	}
+	if (allOpts.server.metaCookie) {
+		const metaData = parseMetaCookie(cookieData[allOpts.server.metaCookie].value);
+		for (const cookieName in cookieData) {
+			cookieData[cookieName] = { ...cookieData[cookieName], ...metaData[cookieName] };
 		}
-	} else {
-		// get all cookies
-		return cookies;
 	}
+	return cookieData;
 };
 
-const setCookie = (response, cookie) => {
-	if (envIsNode) {
-		response.setHeader('Set-Cookie', cookie);
-		// TODO update current cookie list in existing request to reflect new assignment
-	} else if (envIsBrowser) {
-		clientCookieApi(cookie);
+const setCookie = (cookieData, response, cookie, cookieValue, cookieFlags) => {
+	const cookieSet = [];
+	const setCookie = (cookie, cookieValue, cookieFlags) => {
+		// TODO implement setCookie with standard raw format (current) and optional javascript object format
+		let cookieString, cookieName;
+		if (cookieValue === undefined) {
+			cookieString = cookie;
+			[cookieName, ...cookieValue] = cookieString.split('; ')[0].split('=');
+			cookieValue = cookieValue.join('=');
+		} else {
+			cookieName = cookie;
+		}
+		// Expires is deprecated, but old browsers don't support Max-Age
+		// (https://mrcoles.com/blog/cookies-max-age-vs-expires)
+		// so, we set Expires when it is missing but Max-Age is present
+		let expires = false;
+		let maxAge;
+		for (let flag of cookieString.split('; ').slice(1)) {
+			flag = flag.toLowerCase();
+			if (!expires && flag.startsWith('max-age=')) {
+				maxAge = flag.split('=')[1];
+			} else if (flag.startsWith('expires=')) {
+				expires = true;
+			}
+		}
+		if (!expires && maxAge) {
+			cookieString += `; expires=${(new Date(Date.now() + (maxAge * 1000))).toUTCString()}`;
+		}
+		if (envIsNode) {
+			cookieSet.push(cookieString);
+		} else if (envIsBrowser) {
+			clientCookieApi(cookieString);
+		}
+		// TODO update cookie flags inside cookieData, this just updates the value
+		// because of this (?) also the value of the metaCookie is not updated in the request
+		cookieData[cookieName] ||= {};
+		cookieData[cookieName].value = cookieValue;
+		cookieString = makeCookieString(cookieData);
+		return cookieString;
+	};
+	const result = setCookie(cookie, cookieValue, cookieFlags);
+	if (allOpts.server.metaCookie) {
+		const [cookieBody, ...cookieFlags] = cookie.split('; ');
+		const cookieName = cookieBody.split('=')[0];
+		const metaData = parseMetaCookie(cookieData[allOpts.server.metaCookie]?.value);
+		if (cookieFlags.length) {
+			metaData[cookieName] = parseMetaCookie(`${cookieName}&${cookieFlags.join('&')}`)[cookieName];
+		} else {
+			delete metaData[cookieName];
+		}
+		setCookie(`${allOpts.server.metaCookie}=${makeMetaCookie(metaData)}; max-age=${cookieMaxAge2Years}`);
 	}
+	if (envIsNode) {
+		response.setHeader('set-cookie', cookieSet);
+	}
+	return result;
+};
+
+// TODO handle renewal of all cookies at the same time if no name specified?
+const renewCookie = (getCookie, setCookie, cookieName) => {
+	const metaData = parseMetaCookie(getCookie(allOpts.server.metaCookie));
+	const cookieFlags = makeMetaCookie({ [cookieName]: metaData[cookieName] }).split('|')[0].slice(cookieName.length).replaceAll('&', '; ');
+	setCookie(`${cookieName}=${getCookie(cookieName)}${cookieFlags}`);
+	setCookie(`${allOpts.server.metaCookie}=${makeMetaCookie(metaData)}; max-age=${cookieMaxAge2Years}`);
+};
+
+// below we use pipe ('|') to split cookies and amperstand ('&') for fields,
+// no problem since as of 2024 no standard cookie flag has that in the body
+
+const makeMetaCookie = (metaData) => {
+	let metaString = '';
+	metaData[allOpts.server.metaCookie] ||= {};
+	metaData[allOpts.server.metaCookie]['set-date'] = (new Date()).toUTCString();
+	for (const [name, flags] of Object.entries(metaData)) {
+		metaString += `|${name}&`;
+		for (const [key, value] of Object.entries(flags)) {
+			// by standard, boolean cookie flags are named without any value if true, omitted if false
+			metaString += (value === true ? `${key}&` : `${key}=${value}&`);
+		}
+		metaString = metaString.slice(0, -1);
+	}
+	return metaString.slice(1);
+};
+
+const parseMetaCookie = (metaString) => {
+	const metaCookie = {};
+	if (!metaString) {
+		return metaCookie;
+	}
+	for (const cookie of metaString.split('|')) {
+		const [name, ...fields] = cookie.split('&');
+		metaCookie[name] = {};
+		for (const field of fields) {
+			if (!field) {
+				continue;
+			}
+			const [key, ...tokens] = field.split('=');
+			metaCookie[name][key] = (tokens.join('=') || true);
+		}
+	}
+	return metaCookie;
 };
 
 // try to use the built-in cookie API, fallback to a Storage-based wrapper in case it fails (for example on file:///)
