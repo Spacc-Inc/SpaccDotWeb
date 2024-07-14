@@ -1,18 +1,20 @@
 #!/usr/bin/env node
-const SpaccDotWebServer = require('./SpaccDotWeb.Server.js');
+const SpaccDotWebServer = require('../SpaccDotWeb.Server.js');
 const server = SpaccDotWebServer.setup({
 	appName: 'Example',
 	// staticPrefix: '/static/',
+	// staticRoot: '', // not (yet) implemented
 	// staticFiles: [],
-	linkStyles: [ 'Example.css' ],
-	// linkScripts: [],
+	linkStyles: [ 'index.css' ],
+	// linkRuntimeScripts: [], // not (yet) implemented
+	linkClientScripts: [ 'particles.js' ],
 	// pageTitler: (title, opts={}) => `...`,
 	// appPager: (content, title, opts={}) => `...`,
 	// htmlPager: (content, title, opts={}) => `...`,
 });
 
-if (SpaccDotWebServer.envIsNode && ['dump', 'html'].includes(process.argv[2])) {
-	const fileName = server.writeStaticHtml();
+if (SpaccDotWebServer.envIsNode && ['dump', 'html', 'writeStaticHtml'].includes(process.argv[2])) {
+	const fileName = server.writeStaticHtml(Number(process.argv[3] || 0));
 	console.log(`Dumped Static HTML to '${fileName}'!`);
 } else {
 	const serverData = server.initServer({

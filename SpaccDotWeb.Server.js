@@ -1,12 +1,10 @@
 /* TODO:
  * built-in logging
- * configure to embed linked styles and scripts into the HTML output, or just link to file
- * handle linkScripts to insert in the HTML, like linkStyles
- * differentiate between client-only, served-only, and both-mode scripts?
- * relative URL root
+ * relative URL root for redirects and internal functions? (or useless since HTML must be custom anyways?)
  * utility functions for rewriting url query parameters?
  * fix hash navigation to prevent no-going-back issue (possible?)
  * finish polishing the cookie API
+ * implement some nodejs `fs` functions for client-side
  * other things listed in the file
  */
 (() => {
@@ -24,11 +22,14 @@ const cookieMaxAge2Years = (2 * 365 * 24 * 60 * 60);
 const setup = (globalOptions={}) => {
 	allOpts.global = globalOptions;
 	//allOpts.global.appName ||= 'Untitled SpaccDotWeb App';
+	//allOpts.global.appRoot ||= ''; //TODO
 	allOpts.global.staticPrefix ||= '/static/';
+	//allOpts.global.staticRoot ||= ''; //TODO
 	allOpts.global.staticFiles ||= [];
 	allOpts.global.linkStyles ||= [];
-	allOpts.global.linkScripts ||= [];
-	for (const item of [...allOpts.global.linkStyles, ...allOpts.global.linkScripts]) {
+	//allOpts.global.linkRuntimeScripts ||= []; //TODO
+	allOpts.global.linkClientScripts ||= [];
+	for (const item of [ ...allOpts.global.linkStyles, ...allOpts.global.linkClientScripts ]) {
 		const itemLow = item.toLowerCase();
 		if (!(itemLow.startsWith('http://') || itemLow.startsWith('https://') || itemLow.startsWith('/'))) {
 			allOpts.global.staticFiles.push(item);
@@ -40,9 +41,8 @@ const setup = (globalOptions={}) => {
 		--><meta charset="utf-8"/><!--
 		--><meta name="viewport" content="width=device-width, initial-scale=1.0"/><!--
 		--><title>${(opts.pageTitler || allOpts.global.pageTitler)(title, opts)}</title><!--
-		-->${allOpts.global.linkStyles.map((item) => {
-			return `<link rel="stylesheet" href="${allOpts.global.staticFiles.includes(item) ? (allOpts.global.staticPrefix + item) : item}"/>`;
-		}).join('')}<!--
+		-->${allOpts.global.linkStyles.map((path) => makeHtmlStyleFragment(path, opts.selfContained)).join('')}<!--
+		-->${allOpts.global.linkClientScripts.map((path) => makeHtmlScriptFragment(path, opts.selfContained)).join('')}<!--
 	--></head><body><!--
 		--><div id="transition"></div><!--
 		--><div id="app">${(opts.appPager || allOpts.global.appPager)(content, title, opts)}</div><!--
@@ -80,29 +80,49 @@ const initServer = (serverOptions) => {
 	return allOpts.server;
 };
 
-const writeStaticHtml = () => {
-	// TODO: fix script paths
+const writeStaticHtml = (selfContained=false) => {
+	// TODO fix selfContained to embed everything when true, even the runtime files
 	// TODO: this should somehow set envIsBrowser to true to maybe allow for correct template rendering, but how to do it without causing race conditions? maybe we should expose another variable
-	const fileName = (process.mainModule.filename.split('.').slice(0, -1).join('.') + '.html');
-	fs.writeFileSync(fileName, allOpts.global.htmlPager(`
-		<script src="./${path.basename(__filename)}"></script>
-		<script src="./SpaccDotWeb.Alt.js"></script>
-		<script>
+	const appFilePath = process.mainModule.filename;
+	const htmlFilePath = (appFilePath.split('.').slice(0, -1).join('.') + '.html');
+	// path.relative seems to always append an extra '../', so we must slice it
+	const libraryPath = path.relative(appFilePath, __filename).split(path.sep).slice(1).join(path.sep);
+	const libraryFolder = libraryPath.split(path.sep).slice(0, -1).join(path.sep);
+	fs.writeFileSync(htmlFilePath, allOpts.global.htmlPager(`
+		${makeHtmlScriptFragment(libraryPath, selfContained)}
+		${makeHtmlScriptFragment(((libraryFolder && (libraryFolder + '/')) + 'SpaccDotWeb.Alt.js'), selfContained)}
+		<${'script'}>
 			window.require = () => {
 				window.require = async (src, type) => {
 					await SpaccDotWeb.RequireScript((src.startsWith('./') ? src : ('node_modules/' + src)), type);
 				};
 				return window.SpaccDotWebServer;
 			};
-			window.SpaccDotWebServer.staticFilesData = { ${allOpts.global.staticFiles.map((file) => {
-				const filePath = (process.mainModule.filename.split(path.sep).slice(0, -1).join(path.sep) + path.sep + file);
+			window.SpaccDotWebServer.staticFilesData = { ${selfContained ? allOpts.global.staticFiles.map((file) => {
+				// TODO check if these paths are correct or must still be fixed
+				const filePath = (appFilePath.split(path.sep).slice(0, -1).join(path.sep) + path.sep + file);
 				return `"${file}":"data:${mime.lookup(filePath)};base64,${fs.readFileSync(filePath).toString('base64')}"`;
-			})} };
-		</script>
-		<script src="./${path.basename(process.mainModule.filename)}"></script>
-	`));
-	return fileName;
+			}).join() : ''} };
+		</${'script'}>
+		${makeHtmlScriptFragment(path.basename(appFilePath), selfContained)}
+	`, null, { selfContained }));
+	return htmlFilePath;
 };
+
+const makeHtmlStyleFragment = (path, getContent) => {
+	const data = getFilePathContent(path, getContent);
+	return (data[1] ? `<style>${data[1]}</style>` : `<link rel="stylesheet" href="${data[0]}"/>`);
+};
+
+const makeHtmlScriptFragment = (path, getContent) => {
+	const data = getFilePathContent(path, getContent);
+	return `<${'script'}${data[1] ? `>${data[1]}` : ` src="${data[0]}">`}</${'script'}>`;
+};
+
+const getFilePathContent = (path, getContent) => ([
+	(allOpts.global.staticFiles.includes(path) ? (allOpts.global.staticPrefix + path) : ('./' + path)),
+	(getContent && fs.existsSync(path) && fs.readFileSync(path)),
+]);
 
 const handleRequest = async (request, response={}) => {
 	// build request context and handle special tasks
@@ -193,10 +213,18 @@ const renderPage = (response, content, title, opts={}) => {
 		document.title = (opts.pageTitler || allOpts.global.pageTitler)(title, opts);
 		document.querySelector(allOpts.server.appElement).innerHTML = ((opts.appPager || allOpts.global.appPager)(content, title, opts));
 		for (const srcElem of document.querySelectorAll(`[src^="${allOpts.global.staticPrefix}"]`)) {
-			srcElem.src = window.SpaccDotWebServer.staticFilesData[srcElem.getAttribute('src')];
+			var fileUrl = makeStaticClientFileUrl(srcElem.getAttribute('src'));
+			if (srcElem.tagName === 'SCRIPT') {
+				// script elements die immediately after being first set up,
+				// so we must re-create them to have them run with correct uri
+				srcElem.remove();
+				document.head.appendChild(Object.assign(document.createElement('script'), { src: fileUrl }));
+			} else {
+				srcElem.src = fileUrl;
+			}
 		}
 		for (const linkElem of document.querySelectorAll(`link[rel="stylesheet"][href^="${allOpts.global.staticPrefix}"]`)) {
-			linkElem.href = window.SpaccDotWebServer.staticFilesData[linkElem.getAttribute('href').slice(allOpts.global.staticPrefix.length)];
+			linkElem.href = makeStaticClientFileUrl(linkElem.getAttribute('href'));
 		}
 		for (const aElem of document.querySelectorAll('a[href^="/"]')) {
 			aElem.href = `#${aElem.getAttribute('href')}`;
@@ -216,6 +244,11 @@ const renderPage = (response, content, title, opts={}) => {
 		}
 		setClientTransition(false);
 	};
+};
+
+const makeStaticClientFileUrl = (url) => {
+	url = url.slice(allOpts.global.staticPrefix.length);
+	return (window.SpaccDotWebServer.staticFilesData[url] || ('./' + url));
 };
 
 const setClientTransition = (status) => {
@@ -295,7 +328,7 @@ const parseCookieString = (cookieString) => {
 		cookieData[key] = { value: rest.join('=') };
 	}
 	if (allOpts.server.metaCookie) {
-		const metaData = parseMetaCookie(cookieData[allOpts.server.metaCookie].value);
+		const metaData = parseMetaCookie(cookieData[allOpts.server.metaCookie]?.value);
 		for (const cookieName in cookieData) {
 			cookieData[cookieName] = { ...cookieData[cookieName], ...metaData[cookieName] };
 		}
@@ -457,16 +490,16 @@ const parseclientLanguages = (request) => {
 	}
 };
 
-const exportObj = { envIsNode, envIsBrowser, setup };
+const exportObj = { envIsNode, envIsBrowser, setup, makeHtmlStyleFragment, makeHtmlScriptFragment };
 if (envIsNode) {
 	fs = require('fs');
 	path = require('path');
 	mime = require('mime-types');
 	multipart = require('parse-multipart-data');
 	module.exports = exportObj;
-};
+}
 if (envIsBrowser) {
 	window.SpaccDotWebServer = exportObj;
-};
+}
 
 })();

@@ -1,4 +1,4 @@
 *.tmp
 /Build/*
 /node_modules/*
-/Example.Server.html
+/Example.Server/index.html
