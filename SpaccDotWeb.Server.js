@@ -2,7 +2,7 @@
  * built-in logging
  * relative URL root for redirects and internal functions? (or useless since HTML must be custom anyways?)
  * utility functions for rewriting url query parameters?
- * fix hash navigation to prevent no-going-back issue (possible?)
+ * fix client hash navigation to prevent no-going-back issue (possible?)
  * finish polishing the cookie API
  * implement some nodejs `fs` functions for client-side
  * other things listed in the file
@@ -35,17 +35,17 @@ const setup = (globalOptions={}) => {
 			allOpts.global.staticFiles.push(item);
 		}
 	}
-	allOpts.global.pageTitler ||= (title, opts={}) => `${title || ''}${title && allOpts.global.appName ? ' — ' : ''}${allOpts.global.appName || ''}`,
-	allOpts.global.appPager ||= (content, title, opts={}) => content,
-	allOpts.global.htmlPager ||= (content, title, opts={}) => `<!DOCTYPE html><html><head><!--
+	allOpts.global.pageTitler ||= (title, opts={}, context) => `${title || ''}${title && allOpts.global.appName ? ' — ' : ''}${allOpts.global.appName || ''}`,
+	allOpts.global.appPager ||= (content, title, opts={}, context) => content,
+	allOpts.global.htmlPager ||= (content, title, opts={}, context) => `<!DOCTYPE html><html><head><!--
 		--><meta charset="utf-8"/><!--
 		--><meta name="viewport" content="width=device-width, initial-scale=1.0"/><!--
-		--><title>${(opts.pageTitler || allOpts.global.pageTitler)(title, opts)}</title><!--
+		--><title>${(opts.pageTitler || allOpts.global.pageTitler)(title, opts, context)}</title><!--
 		-->${allOpts.global.linkStyles.map((path) => makeHtmlStyleFragment(path, opts.selfContained)).join('')}<!--
 		-->${allOpts.global.linkClientScripts.map((path) => makeHtmlScriptFragment(path, opts.selfContained)).join('')}<!--
 	--></head><body><!--
 		--><div id="transition"></div><!--
-		--><div id="app">${(opts.appPager || allOpts.global.appPager)(content, title, opts)}</div><!--
+		--><div id="app">${(opts.appPager || allOpts.global.appPager)(content, title, opts, context)}</div><!--
 	--></body></html>`;
 	const result = {};
 	result.initServer = (serverOptions={}) => initServer(serverOptions);
@@ -70,24 +70,25 @@ const initServer = (serverOptions) => {
 	if (envIsBrowser) {
 		allOpts.server.appElement ||= 'div#app';
 		allOpts.server.transitionElement ||= 'div#transition';
-		const navigatePage = () => handleRequest({ url: window.location.hash.slice(1), method: 'GET' });
 		window.addEventListener('hashchange', () => {
 			window.location.hash ||= '/';
-			navigatePage();
+			navigateClientPage();
 		});
-		navigatePage();
+		navigateClientPage();
 	}
 	return allOpts.server;
 };
 
+const navigateClientPage = (forceUrl) => ((!forceUrl || (window.location.hash === forceUrl))
+	&& handleRequest({ url: window.location.hash.slice(1), method: 'GET' }));
+
 const writeStaticHtml = (selfContained=false) => {
-	// TODO fix selfContained to embed everything when true, even the runtime files
-	// TODO: this should somehow set envIsBrowser to true to maybe allow for correct template rendering, but how to do it without causing race conditions? maybe we should expose another variable
 	const appFilePath = process.mainModule.filename;
 	const htmlFilePath = (appFilePath.split('.').slice(0, -1).join('.') + '.html');
 	// path.relative seems to always append an extra '../', so we must slice it
 	const libraryPath = path.relative(appFilePath, __filename).split(path.sep).slice(1).join(path.sep);
 	const libraryFolder = libraryPath.split(path.sep).slice(0, -1).join(path.sep);
+	const context = { envIsNode: false, envIsBrowser: true };
 	fs.writeFileSync(htmlFilePath, allOpts.global.htmlPager(`
 		${makeHtmlScriptFragment(libraryPath, selfContained)}
 		${makeHtmlScriptFragment(((libraryFolder && (libraryFolder + '/')) + 'SpaccDotWeb.Alt.js'), selfContained)}
@@ -105,7 +106,7 @@ const writeStaticHtml = (selfContained=false) => {
 			}).join() : ''} };
 		</${'script'}>
 		${makeHtmlScriptFragment(path.basename(appFilePath), selfContained)}
-	`, null, { selfContained }));
+	`, null, { selfContained, context }, context));
 	return htmlFilePath;
 };
 
@@ -128,8 +129,8 @@ const handleRequest = async (request, response={}) => {
 	// build request context and handle special tasks
 	let result = allOpts.server.defaultResponse;
 	const context = {
-		request,
-		response,
+		envIsNode, envIsBrowser,
+		request, response,
 		cookieString: (envIsNode ? (request.headers.cookie || '') : envIsBrowser ? clientCookieApi() : ''),
 		clientLanguages: parseclientLanguages(request),
 		urlPath: request.url.slice(1).toLowerCase().split('?')[0],
@@ -138,7 +139,7 @@ const handleRequest = async (request, response={}) => {
 		//storageApi: (key,value, opts) => storageApi(key, value, opts),
 		redirectTo: (url) => redirectTo(response, url),
 	};
-	context.renderPage = (content, title, opts) => renderPage(response, content, title, { ...opts, context });
+	context.renderPage = (content, title, opts) => renderPage(response, content, title, { ...opts, context }, context);
 	context.urlSections = context.urlPath.split('/');
 	context.urlParameters = Object.fromEntries(new URLSearchParams(context.urlQuery));
 	context.cookieData = parseCookieString(context.cookieString);
@@ -202,16 +203,16 @@ const requestCheckFunction = (check, context) => {
 	}
 };
 
-const renderPage = (response, content, title, opts={}) => {
+const renderPage = (response, content, title, opts={}, context) => {
 	// TODO titles and things
 	// TODO status code could need to be different in different situations and so should be set accordingly? (but we don't handle it here?)
 	if (envIsNode) {
 		response.setHeader('content-type', 'text/html; charset=utf-8');
-		response.end((opts.htmlPager || allOpts.global.htmlPager)(content, title, opts));
+		response.end((opts.htmlPager || allOpts.global.htmlPager)(content, title, opts, context));
 	}
 	if (envIsBrowser) {
-		document.title = (opts.pageTitler || allOpts.global.pageTitler)(title, opts);
-		document.querySelector(allOpts.server.appElement).innerHTML = ((opts.appPager || allOpts.global.appPager)(content, title, opts));
+		document.title = (opts.pageTitler || allOpts.global.pageTitler)(title, opts, context);
+		document.querySelector(allOpts.server.appElement).innerHTML = ((opts.appPager || allOpts.global.appPager)(content, title, opts, context));
 		for (const srcElem of document.querySelectorAll(`[src^="${allOpts.global.staticPrefix}"]`)) {
 			var fileUrl = makeStaticClientFileUrl(srcElem.getAttribute('src'));
 			if (srcElem.tagName === 'SCRIPT') {
@@ -227,7 +228,12 @@ const renderPage = (response, content, title, opts={}) => {
 			linkElem.href = makeStaticClientFileUrl(linkElem.getAttribute('href'));
 		}
 		for (const aElem of document.querySelectorAll('a[href^="/"]')) {
-			aElem.href = `#${aElem.getAttribute('href')}`;
+			var url = ('#' + aElem.getAttribute('href'));
+			aElem.href = url;
+			// force navigation to page if the url is equal to current (refresh)
+			aElem.addEventListener('click', () => {
+				navigateClientPage(url);
+			});
 		}
 		for (const formElem of document.querySelectorAll('form')) {
 			formElem.onsubmit = (event) => {
@@ -266,7 +272,7 @@ const redirectTo = (response, url) => {
 		response.end();
 	}
 	if (envIsBrowser) {
-		location.hash = url;
+		navigateClientPage('#' + (location.hash = url));
 	}
 };
 

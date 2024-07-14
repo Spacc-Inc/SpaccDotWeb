@@ -8,9 +8,9 @@ const server = SpaccDotWebServer.setup({
 	linkStyles: [ 'index.css' ],
 	// linkRuntimeScripts: [], // not (yet) implemented
 	linkClientScripts: [ 'particles.js' ],
-	// pageTitler: (title, opts={}) => `...`,
-	// appPager: (content, title, opts={}) => `...`,
-	// htmlPager: (content, title, opts={}) => `...`,
+	// pageTitler: (title, opts={}, context) => `...`,
+	// appPager: (content, title, opts={}, context) => `...`,
+	// htmlPager: (content, title, opts={}, context) => `...`,
 });
 
 if (SpaccDotWebServer.envIsNode && ['dump', 'html', 'writeStaticHtml'].includes(process.argv[2])) {
