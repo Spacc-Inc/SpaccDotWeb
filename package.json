@@ -6,7 +6,7 @@
 		"build:clear": "rm -rf ./Build"
 	},
 	"devDependencies": {
-		"@babel/cli": "^7.23.0",
+		"@babel/cli": "^7.24.8",
 		"@babel/core": "^7.23.0",
 		"@babel/preset-env": "^7.22.20",
 		"core-js": "^3.35.0",

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const SpaccDotWeb = ((args) => { //////////////////////////////////////////////
 
 
@@ -16,6 +17,7 @@ if (platformIsNode) {
 	Lib.crypto = require('crypto');
 	Lib.childProcess = require('child_process');
 	Lib.jsdom = require('jsdom');
+	Lib.Build = require('./SpaccDotWeb.Build.js').BuildScriptFile;
 	__scriptname = __filename__.split('/').slice(-1)[0];
 	windowObject = new Lib.jsdom.JSDOM('', JsdomOptions).window;
 };
@@ -49,24 +51,6 @@ if (platformIsNode) {
 		Lib.fs.writeFileSync(`${__dirname}/Build/App-${opts.Page}/Full.html`, `<!DOCTYPE html>${documentObject.documentElement.outerHTML}`);
 
 		isBuildingApp = false;
-	};
-
-	SpaccDotWeb.LibBuild = () => {
-		Lib.fs.mkdirSync(`${__dirname}/Build/Assets.tmp`, { recursive: true });
-		let uptodate = true;
-		const compiledPath = `${__dirname}/Build/SpaccDotWeb.js`;
-		const minifiedPath = `${__dirname}/Build/SpaccDotWeb.min.js`;
-		const hashPath = `${__dirname}/Build/SpaccDotWeb.js.hash`;
-		const hashOld = (Lib.fs.existsSync(hashPath) && Lib.fs.readFileSync(hashPath, 'utf8'));
-		const hashNew = Lib.crypto.createHash('sha256').update(Lib.fs.readFileSync(__filename__, 'utf8')).digest('hex');
-		if (!Lib.fs.existsSync(compiledPath) || !Lib.fs.existsSync(minifiedPath) || !(hashOld === hashNew)) {
-			uptodate = false;
-			Lib.fs.writeFileSync(hashPath, hashNew);
-			Lib.fs.writeFileSync(compiledPath, Lib.childProcess.execSync(`cat "${__filename__}" | npx babel -f "${__scriptname}"`));
-			Lib.fs.writeFileSync(minifiedPath, Lib.childProcess.execSync(`cat "${compiledPath}" | npx uglifyjs`));
-		};
-		uptodate && console.log('Library is up-to-date.');
-		return { compiledText: Lib.fs.readFileSync(compiledPath, 'utf8'), minified: Lib.fs.readFileSync(minifiedPath, 'utf8') };
 	};
 };
 
@@ -128,7 +112,7 @@ const DomMakeBase = (Modules) => {
 		if (isBuildingApp) {
 			scriptsHtml += `<scr`+`ipt src="http://cdn.jsdelivr.net/npm/core-js-bundle/minified.min.js"></scr`+`ipt>`;
 			scriptsHtml += `<scr`+`ipt src="https://cdn.jsdelivr.net/npm/core-js-bundle/minified.min.js"></scr`+`ipt>`;
-			scriptsHtml += `<scr`+`ipt>${SpaccDotWeb.LibBuild().minified}</scr`+`ipt>`;
+			scriptsHtml += `<scr`+`ipt>${Lib.Build(__filename__, { forceResult: true }).minified}</scr`+`ipt>`;
 			for (const elem of documentObject.querySelectorAll('script[module]')) {
 				//if (elem.module === 'Meta' && !['application/json', 'text/json'].includes(elem.type)) {
 				//	elem.innerHTML = `(${elem.innerHTML})`;
@@ -140,6 +124,7 @@ const DomMakeBase = (Modules) => {
 					} else {
 						const tmpHash = Lib.crypto.createHash('sha256').update(elem.innerHTML).digest('hex');
 						const tmpPath = `${__dirname}/Build/Assets.tmp/${tmpHash}.js`;
+						Lib.fs.mkdirSync(`${__dirname}/Build/Assets.tmp`, { recursive: true });
 						Lib.fs.writeFileSync(tmpPath, elem.innerHTML);
 						const scriptCode = Lib.childProcess.execSync(`cat "${tmpPath}" | npx babel -f "${tmpHash}.js" | npx uglifyjs`);
 						scriptsCode += scriptCode;

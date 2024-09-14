@@ -1,3 +1,4 @@
 #!/bin/sh
-node ./SpaccDotWeb.js 'SpaccDotWeb.LibBuild()'
-node ./SpaccDotWeb.Build.js 'BuildScriptFile("SpaccDotWeb.Alt.js")'
+for file in ./SpaccDotWeb*.js
+do node ./SpaccDotWeb.Build.js "BuildScriptFile('${file}')"
+done
