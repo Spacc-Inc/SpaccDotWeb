@@ -1,4 +1,4 @@
-(function(){
+(function(currentScript){
 	const SpaccDotWeb = {};
 
 	SpaccDotWeb.AppInit = (meta) => {
@@ -12,22 +12,27 @@
 		localStorage[value !== undefined ? 'setItem' : 'getItem'](
 			`${prefix}/${key}`, JSON.stringify(value)) || null);
 
-	SpaccDotWeb.RequireScript = (src, type) => {
+	SpaccDotWeb.requireScript = (src, params={}) => {
 		return (new Promise((resolve) => {
 			const scriptElem = document.createElement('script');
 			//if (type) {
 			//	scriptElem.type = type;
 			//}
-			scriptElem.onload = (event) => {
-				resolve(event);
-			};
+			if (params.useCurrentPath) {
+				const currentPath = currentScript.src;
+				if (currentPath) {
+					src = `${currentPath.split('/').slice(0, -1).join('/')}/${src}`;
+				}
+			}
+			scriptElem.onload = resolve;
 			scriptElem.src = src;
 			document.body.appendChild(scriptElem);
 		}));
 	};
 	// .RequireScripts = (...) => {}
+	SpaccDotWeb.RequireScript = SpaccDotWeb.requireScript;
 
-	SpaccDotWeb.ShowModal = async (params) => {
+	SpaccDotWeb.showModal = async (params) => {
 	// TODO: delete dialogs from DOM after use (garbage collect)?
 		if (!window.HTMLDialogElement && !window.dialogPolyfill) {
 			// TODO include in dependencies, don't load from external server
@@ -83,8 +88,10 @@
 		modal.showModal();
 		return modal;
 	};
+	SpaccDotWeb.ShowModal = SpaccDotWeb.showModal;
 
-	SpaccDotWeb.Sleep = (ms) => (new Promise((resolve) => setTimeout(resolve, ms)));
+	SpaccDotWeb.sleep = (ms) => (new Promise((resolve) => setTimeout(resolve, ms)));
+	SpaccDotWeb.Sleep = SpaccDotWeb.sleep;
 
 	window.SpaccDotWeb ||= SpaccDotWeb;
-})();
+})(document.currentScript);
