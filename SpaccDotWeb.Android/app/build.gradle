@@ -1,0 +1,28 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    // Adjust the very following based on the application to ship
+    namespace 'com.example.spaccwebviewapplication'
+    defaultConfig {
+        applicationId 'com.example.spaccwebviewapplication'
+        versionCode 1
+        versionName '1.0'
+
+        minSdk 1
+        targetSdk 34
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.dbg'
+        }
+        release {
+            minifyEnabled true
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileSdk 34
+}
