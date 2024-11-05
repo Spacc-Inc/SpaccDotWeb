@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="exit">Esci</string>
+    <string name="move_app_data">Sposta Dati App</string>
+    <string name="move_app_data_info">La app è stata trasferita su una diversa locazione di archiviazione. I dati saranno spostati ora.</string>
+</resources>

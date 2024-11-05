@@ -7,18 +7,23 @@
     <!-- Lets the app access the Internet — not needed for fully offline apps -->
     <!-- <uses-permission android:name="android.permission.INTERNET" /> -->
 
-    <!-- Lets the webview load and display files from the device's shared storage -->
-    <!-- <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> -->
+    <!-- Needed from Android ??? to 4.4 KitKat (API ???-19) to keep app data on external storage -->
+    <!-- Removing these will not break the app, but it will write only on internal storage -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <!-- Additional suggested attributes:
         android:appCategory=["accessibility" | "audio" | "game" | "image" | "maps" | "news" | "productivity" | "social" | "video"]
         android:isGame=["true" | "false"]
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
+        android:usesCleartextTraffic=["true" | "false"]
     -->
     <application
+        android:name=".MainApplication"
         android:label="@string/app_name"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+        android:resizeableActivity="true"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"

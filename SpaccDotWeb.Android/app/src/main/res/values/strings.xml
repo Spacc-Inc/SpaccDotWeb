@@ -1,3 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">SpaccWebView Application</string>
+    <string name="app_name" translatable="false">SpaccWebView Application</string>
+    <string name="exit">Exit</string>
+    <string name="move_app_data">Move App Data</string>
+    <string name="move_app_data_info">The app has been transferred to a different storage location. The data will be moved now.</string>
 </resources>
