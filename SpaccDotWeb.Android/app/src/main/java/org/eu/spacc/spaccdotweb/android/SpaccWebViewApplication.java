@@ -1,6 +1,7 @@
 package org.eu.spacc.spaccdotweb.android;
 
 import android.app.Application;
+import org.eu.spacc.spaccdotweb.android.utils.StorageUtils;
 import java.io.File;
 
 public class SpaccWebViewApplication extends Application {

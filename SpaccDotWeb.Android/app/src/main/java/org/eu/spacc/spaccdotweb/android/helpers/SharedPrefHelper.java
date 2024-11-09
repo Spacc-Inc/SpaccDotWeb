@@ -1,4 +1,4 @@
-package org.eu.spacc.spaccdotweb.android;
+package org.eu.spacc.spaccdotweb.android.helpers;
 
 import android.content.Context;
 import android.content.SharedPreferences;

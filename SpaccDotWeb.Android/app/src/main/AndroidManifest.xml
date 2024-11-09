@@ -8,7 +8,7 @@
     <!-- <uses-permission android:name="android.permission.INTERNET" /> -->
 
     <!-- Needed from Android ??? to 4.4 KitKat (API ???-19) to keep app data on external storage -->
-    <!-- Removing these will not break the app, but it will write only on internal storage -->
+    <!-- Removing these will not break the app, but it will write only on internal storage on those versions -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 

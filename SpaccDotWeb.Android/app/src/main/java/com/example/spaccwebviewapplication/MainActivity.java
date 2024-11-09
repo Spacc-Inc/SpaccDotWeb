@@ -1,7 +1,9 @@
 package com.example.spaccwebviewapplication;
 
 import android.os.Bundle;
-import org.eu.spacc.spaccdotweb.android.*;
+
+import org.eu.spacc.spaccdotweb.android.helpers.DataMoveHelper;
+import org.eu.spacc.spaccdotweb.android.SpaccWebViewActivity;
 
 public class MainActivity extends SpaccWebViewActivity {
 

@@ -1,4 +1,4 @@
-package org.eu.spacc.spaccdotweb.android;
+package org.eu.spacc.spaccdotweb.android.utils;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;

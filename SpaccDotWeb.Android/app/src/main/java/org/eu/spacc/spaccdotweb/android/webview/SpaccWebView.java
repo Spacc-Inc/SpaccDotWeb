@@ -1,18 +1,23 @@
-package org.eu.spacc.spaccdotweb.android;
+package org.eu.spacc.spaccdotweb.android.webview;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.ContextMenu;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+
+import org.eu.spacc.spaccdotweb.android.utils.ApiUtils;
+import org.eu.spacc.spaccdotweb.android.Config;
 
 public class SpaccWebView extends WebView {
 
     @SuppressLint("SetJavaScriptEnabled")
     public SpaccWebView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        this.setWebViewClient(new SpaccWebViewClient(context));
-        this.setWebChromeClient(new SpaccWebChromeClient(context));
+        this.setWebViewClient(new WebViewClient(context));
+        this.setWebChromeClient(new WebChromeClient(context));
+        this.setDownloadListener(new DownloadListener(context));
 
         WebSettings webSettings = this.getSettings();
 
@@ -26,6 +31,12 @@ public class SpaccWebView extends WebView {
 
         ApiUtils.apiRun(3, () -> webSettings.setAllowFileAccess(false));
     }
+
+    // TODO: Implement context menu (long-press on links, images, etc...)
+//    @Override
+//    protected void onCreateContextMenu(ContextMenu menu) {
+//        super.onCreateContextMenu(menu);
+//    }
 
     public void loadAppIndex() {
         String url = null;

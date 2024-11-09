@@ -1,19 +1,18 @@
-package org.eu.spacc.spaccdotweb.android;
+package org.eu.spacc.spaccdotweb.android.webview;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.webkit.ValueCallback;
-import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 
-public class SpaccWebChromeClient extends WebChromeClient {
+public class WebChromeClient extends android.webkit.WebChromeClient {
     private static final int INPUT_FILE_REQUEST_CODE = 1;
 
     private final Context context;
 
-    public SpaccWebChromeClient(Context context) {
+    public WebChromeClient(Context context) {
         super();
         this.context = context;
     }

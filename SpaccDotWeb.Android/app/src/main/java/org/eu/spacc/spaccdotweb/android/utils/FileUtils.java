@@ -1,5 +1,12 @@
-package org.eu.spacc.spaccdotweb.android;
+package org.eu.spacc.spaccdotweb.android.utils;
 
+import static android.content.Context.DOWNLOAD_SERVICE;
+import android.app.DownloadManager;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.webkit.CookieManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -58,6 +65,23 @@ public class FileUtils {
         }
         if (deleteRoot) {
             rootDir.delete();
+        }
+    }
+
+    // TODO: Handle downloads internally on old Android versions
+    public static void startFileDownload(Context context, Uri downloadUrl, String userAgent, String contentDisposition, String mimeType) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD && !downloadUrl.toString().toLowerCase().startsWith("data:")) {
+            // TODO: We should handle downloading data: URIs manually
+            DownloadManager.Request request = new DownloadManager.Request(downloadUrl)
+                    //.setDestinationUri(fileUri)
+                    .setMimeType(mimeType)
+                    .addRequestHeader("User-Agent", userAgent)
+                    .addRequestHeader("Content-Disposition", contentDisposition)
+                    .addRequestHeader("Cookie", CookieManager.getInstance().getCookie(downloadUrl.toString()));
+            ApiUtils.apiRun(11, () -> request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED));
+            ((DownloadManager)context.getSystemService(DOWNLOAD_SERVICE)).enqueue(request);
+        } else {
+            ApiUtils.openOrShareUrl(context, downloadUrl);
         }
     }
 }

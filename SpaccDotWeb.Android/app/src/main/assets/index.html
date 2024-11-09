@@ -21,10 +21,18 @@
     <li><a href="http://example.com">http://</a></li>
     <li><a href="https://example.com">https://</a></li>
     <li><a href="ftp://example.com">ftp://</a></li>
+    <li><a href="data:text/plain;utf8,Hello World!">data:text/plain</a></li>
+    <li><a href="data:text/html;utf8,&lt;h2&gt;Hello World!">data:text/html</a></li>
     <li><a href="mailto:example@example.com">mailto:</a></li>
 </ul>
 <h3>Files</h3>
     <p>Upload: <label><input type="file"/></label></p>
-    <p>Download: <a download="test.bin" href="data:text/plain;utf8,Test">Download</a></p>
+    <p>Download:</p>
+    <ul>
+        <li><a download="Hello World.txt" href="data:text/plain;utf8,Hello World!">data:, .txt</a></li>
+        <li><a download="Example.html" href="http://example.com/index.html">http://, .html</a></li>
+        <li><a download="Example.html" href="https://example.com/index.html">https://, .html</a></li>
+        <li><a href="https://hlb0.octt.eu.org/Drive/Misc/onestop.mid">https://, .mid</a></li>
+    </ul>
 </body>
 </html>
