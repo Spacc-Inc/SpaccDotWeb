@@ -1,7 +1,6 @@
 package com.example.spaccwebviewapplication;
 
 import android.os.Bundle;
-
 import org.eu.spacc.spaccdotweb.android.helpers.DataMoveHelper;
 import org.eu.spacc.spaccdotweb.android.SpaccWebViewActivity;
 
@@ -15,6 +14,7 @@ public class MainActivity extends SpaccWebViewActivity {
         DataMoveHelper.run(this, R.string.exit, R.string.move_app_data, R.string.move_app_data_info);
 
         this.webView = findViewById(R.id.webview);
+        this.webView.loadConfig(this, R.xml.app_config);
         this.webView.loadAppIndex();
     }
 }

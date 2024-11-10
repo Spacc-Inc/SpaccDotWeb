@@ -6,11 +6,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Build;
-
 import org.eu.spacc.spaccdotweb.android.Constants;
 import org.eu.spacc.spaccdotweb.android.utils.StorageUtils;
 import org.eu.spacc.spaccdotweb.android.utils.FileUtils;
-
 import java.io.IOException;
 
 public class DataMoveHelper {

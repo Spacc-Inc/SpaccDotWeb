@@ -1,13 +1,9 @@
 package org.eu.spacc.spaccdotweb.android.webview;
 
-import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
 import android.webkit.WebView;
-
 import org.eu.spacc.spaccdotweb.android.utils.ApiUtils;
-
 import java.util.Arrays;
 import java.util.List;
 

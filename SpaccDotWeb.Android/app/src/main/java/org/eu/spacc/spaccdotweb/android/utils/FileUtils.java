@@ -3,7 +3,6 @@ package org.eu.spacc.spaccdotweb.android.utils;
 import static android.content.Context.DOWNLOAD_SERVICE;
 import android.app.DownloadManager;
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.webkit.CookieManager;
