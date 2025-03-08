@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<meta charset="utf8" />
+<style> textarea { width: 100% !important; height: 8rem; min-height: 2em; box-sizing: border-box; } </style>
+<script src="../Build/SpaccDotWeb.Build.bundle.min.js" data-SpaccDotWeb='{"compile":false,"minify":false}'></script>
+
+<fieldset class="script">
+    <legend>Script</legend>
+    <textarea id="script" readonly="true">
+const alerter = (text) => alert(`THIS IS AN ALERT ❗️\n\n${text}`);
+alerter("It's a nice day today, innit?");
+    </textarea>
+    <span>ES6</span>
+</fieldset>
+
+<fieldset class="script">
+    <legend>Compiled</legend>
+    <textarea id="compiled" readonly="true"></textarea>
+    <span>ES5</span>
+</fieldset>
+
+<fieldset class="script">
+    <legend>Compiled+Minified</legend>
+    <textarea id="minified" readonly="true"></textarea>
+    <span>ES5</span>
+</fieldset>
+
+<fieldset class="html">
+    <legend>HTML</legend>
+    <textarea id="html" readonly="true"></textarea>
+    <span>ES5, Compiled+Minified</span>
+</fieldset>
+
+<script>
+    const BuildScript = window.SpaccDotWeb.Build.BuildScript;
+    const $ = (id) => document.getElementById(id);
+
+    const scriptText = $('script').textContent = $('script').textContent.trimEnd();
+
+    // Actually build the script
+    const builtScript = BuildScript(scriptText);
+
+    // Show the build result
+    $('compiled').textContent = builtScript.compiled;
+    $('minified').textContent = builtScript.minified;
+
+    // Execute the compiled result
+    //setTimeout('eval(builtScript.compiled);', 100);
+
+    setTimeout(function(){
+        Array.from(document.querySelectorAll('script')).filter(el => !el.dataset.spaccdotweb).forEach(scriptElement => {
+            scriptElement.textContent = BuildScript(scriptElement.textContent).minified;
+        });
+        $('html').textContent = `<!DOCTYPE html>\n${document.documentElement.outerHTML}`;
+    }, 100);
+
+    document.querySelectorAll('fieldset.script').forEach(fieldset => {
+        const script = fieldset.querySelector('textarea').textContent;
+        fieldset.querySelector('span').innerHTML += `, ${script.length}b`;
+        fieldset.appendChild(Object.assign(document.createElement('button'), {
+            innerHTML: "Execute",
+            onclick: () => eval(script),
+        }));
+    });
+</script>

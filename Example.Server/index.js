@@ -14,7 +14,10 @@ const server = SpaccDotWebServer.setup({
 });
 
 if (SpaccDotWebServer.envIsNode && ['dump', 'html', 'writeStaticHtml'].includes(process.argv[2])) {
-	const fileName = server.writeStaticHtml(Number(process.argv[3] || 0));
+	const fileName = server.writeStaticHtml({
+		selfContained: Number(process.argv[3] || 0),
+		htmlFilePath: process.argv[4],
+	});
 	console.log(`Dumped Static HTML to '${fileName}'!`);
 } else {
 	const serverData = server.initServer({

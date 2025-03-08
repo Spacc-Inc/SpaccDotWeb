@@ -29,7 +29,6 @@
 			document.body.appendChild(scriptElem);
 		}));
 	};
-	// .RequireScripts = (...) => {}
 	SpaccDotWeb.RequireScript = SpaccDotWeb.requireScript;
 
 	SpaccDotWeb.showModal = async (params) => {
@@ -76,7 +75,7 @@
 		buttonCancel = modal.querySelector('button[name="cancel"]');
 		buttonCancel.onclick = (event) => {
 			if (params.actionCancel) {
-				output = actionCancel(event, buttonCancel);
+				output = params.actionCancel(event, buttonCancel);
 			}
 			modal.close();
 			return output;
@@ -93,5 +92,40 @@
 	SpaccDotWeb.sleep = (ms) => (new Promise((resolve) => setTimeout(resolve, ms)));
 	SpaccDotWeb.Sleep = SpaccDotWeb.sleep;
 
+	SpaccDotWeb.$ = (query) => {
+		query = query.trim();
+		return (query.startsWith('::')
+			? arrayFrom(document.querySelectorAll(domSpecialQuery(query.slice(2).trim())))
+			: document.querySelector(domSpecialQuery(query))
+		);
+	}
+	
+	function domSpecialQuery (query) {
+		const chars = [];
+		let buffer = [];
+		let brackets = 0;
+		for (const char of query) {
+			if (brackets === 0) {
+				if (buffer.length > 0) {
+					buffer = buffer.join('');
+					if (!buffer.includes('=')) {
+						buffer = `name=${buffer}`;
+					}
+					chars.push(buffer);
+					buffer = [];
+				}
+				chars.push(char);
+			} else {
+				buffer.push(char);
+			}
+			if (char === '[') {
+				brackets++;
+			} else if (char === ']' && brackets > 0) {
+				brackets--;
+			}
+		}
+		return chars.join('');
+	}
+	
 	window.SpaccDotWeb ||= SpaccDotWeb;
 })(document.currentScript);

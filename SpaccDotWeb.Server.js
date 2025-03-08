@@ -82,16 +82,21 @@ const initServer = (serverOptions) => {
 const navigateClientPage = (forceUrl) => ((!forceUrl || (window.location.hash === forceUrl))
 	&& handleRequest({ url: window.location.hash.slice(1), method: 'GET' }));
 
-const writeStaticHtml = (selfContained=false) => {
+const writeStaticHtml = (options={}) => {
 	const appFilePath = process.mainModule.filename;
-	const htmlFilePath = (appFilePath.split('.').slice(0, -1).join('.') + '.html');
+	options.selfContained ??= false;
+	options.htmlFilePath ??= (appFilePath.split('.').slice(0, -1).join('.') + '.html');
 	// path.relative seems to always append an extra '../', so we must slice it
-	const libraryPath = path.relative(appFilePath, __filename).split(path.sep).slice(1).join(path.sep);
-	const libraryFolder = libraryPath.split(path.sep).slice(0, -1).join(path.sep);
+	let libraryPath = path.relative(appFilePath, __filename).split(path.sep).slice(1).join(path.sep);
+	let libraryFolder = libraryPath.split(path.sep).slice(0, -1).join(path.sep);
+	if (path.sep === '\\') {
+		libraryPath = libraryPath.replaceAll('\\', '/');
+		libraryFolder = libraryFolder.replaceAll('\\', '/');
+	}
 	const context = { envIsNode: false, envIsBrowser: true };
-	fs.writeFileSync(htmlFilePath, allOpts.global.htmlPager(`
-		${makeHtmlScriptFragment(libraryPath, selfContained)}
-		${makeHtmlScriptFragment(((libraryFolder && (libraryFolder + '/')) + 'SpaccDotWeb.Alt.js'), selfContained)}
+	fs.writeFileSync(options.htmlFilePath, allOpts.global.htmlPager(`
+		${makeHtmlScriptFragment(libraryPath, options.selfContained)}
+		${makeHtmlScriptFragment(((libraryFolder && (libraryFolder + '/')) + 'SpaccDotWeb.Alt.js'), options.selfContained)}
 		<${'script'}>
 			window.require = () => {
 				window.require = async (src, type) => {
@@ -99,15 +104,15 @@ const writeStaticHtml = (selfContained=false) => {
 				};
 				return window.SpaccDotWebServer;
 			};
-			window.SpaccDotWebServer.staticFilesData = { ${selfContained ? allOpts.global.staticFiles.map((file) => {
+			window.SpaccDotWebServer.staticFilesData = { ${options.selfContained ? allOpts.global.staticFiles.map((file) => {
 				// TODO check if these paths are correct or must still be fixed
 				const filePath = (appFilePath.split(path.sep).slice(0, -1).join(path.sep) + path.sep + file);
 				return `"${file}":"data:${mime.lookup(filePath)};base64,${fs.readFileSync(filePath).toString('base64')}"`;
 			}).join() : ''} };
 		</${'script'}>
-		${makeHtmlScriptFragment(path.basename(appFilePath), selfContained)}
-	`, null, { selfContained, context }, context));
-	return htmlFilePath;
+		${makeHtmlScriptFragment(path.basename(appFilePath), options.selfContained)}
+	`, null, { selfContained: options.selfContained, context }, context));
+	return options.htmlFilePath;
 };
 
 const makeHtmlStyleFragment = (path, getContent) => {
@@ -115,15 +120,18 @@ const makeHtmlStyleFragment = (path, getContent) => {
 	return (data[1] ? `<style>${data[1]}</style>` : `<link rel="stylesheet" href="${data[0]}"/>`);
 };
 
-const makeHtmlScriptFragment = (path, getContent) => {
-	const data = getFilePathContent(path, getContent);
+const makeHtmlScriptFragment = (patha, getContent) => {
+	const data = getFilePathContent(patha, getContent);
 	return `<${'script'}${data[1] ? `>${data[1]}` : ` src="${data[0]}">`}</${'script'}>`;
 };
 
-const getFilePathContent = (path, getContent) => ([
-	(allOpts.global.staticFiles.includes(path) ? (allOpts.global.staticPrefix + path) : ('./' + path)),
-	(getContent && fs.existsSync(path) && fs.readFileSync(path)),
-]);
+const getFilePathContent = (filePath, getContent) => {
+	const realPath = path.join(path.dirname(process.mainModule.filename), filePath);
+	return [
+		(allOpts.global.staticFiles.includes(filePath) ? (allOpts.global.staticPrefix + filePath) : ('./' + filePath)),
+		(getContent && fs.existsSync(realPath) && fs.readFileSync(realPath)),
+	];
+};
 
 const handleRequest = async (request, response={}) => {
 	// build request context and handle special tasks
