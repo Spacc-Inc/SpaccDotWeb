@@ -9,7 +9,8 @@ pages:
   script: |
     npm install
     npm run build:lib
-    node ./SpaccDotWeb.js 'SpaccDotWeb.AppBuildStandalone({ Page: "Example.html" })'
+    npm run build:examples
+    #node ./SpaccDotWeb.js 'SpaccDotWeb.AppBuildStandalone({ Page: "Example.html" })'
     mkdir -p ./public
     mv ./Build/* ./public
   artifacts:
