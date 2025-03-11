@@ -7,6 +7,7 @@ const Lib = {
 	babel: require('@babel/core'),
 	uglify: require('uglify-js'),
 	postcss: require('postcss'),
+	postcssMinify: require('postcss-minify'),
 	postcssImport: require('postcss-import'),
 	postcssUrl: require('postcss-url'),
 	jsdom: require('jsdom').JSDOM,
@@ -41,11 +42,10 @@ const BuildScriptFile = (scriptFile, options) => {
 };
 
 const BuildHtmlFile = (htmlFile, options) => {
-	options = {
-		outputFolder: './Build',
-		outputFile: htmlFile,
-		inputFolder: Lib.path.dirname(htmlFile),
-	...options };
+	options ||= {};
+	options.outputFile ??= htmlFile;
+	options.inputFolder ??= Lib.path.dirname(htmlFile);
+	options.outputFolder ??= './Build';
 	const outputPath = `${options.outputFolder}/${options.outputFile}`;
 	Build.BuildHtml(Lib.fs.readFileSync(htmlFile, 'utf8'), options).then(html => Lib.fs.writeFileSync(outputPath, html));
 	return outputPath;
@@ -60,5 +60,5 @@ const EncodeStaticFiles = (files, /* encoding='base64' */) => {
 module.exports = Build = { ...Build, BuildScriptFile, BuildHtmlFile, EncodeStaticFiles };
 
 if (require.main === module) {
-	console.log(eval(process.argv.slice(-1)[0]));
+	console.log(eval('Build.'+process.argv.slice(-1)[0]));
 }

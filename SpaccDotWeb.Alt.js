@@ -92,23 +92,27 @@
 	SpaccDotWeb.sleep = (ms) => (new Promise((resolve) => setTimeout(resolve, ms)));
 	SpaccDotWeb.Sleep = SpaccDotWeb.sleep;
 
-	SpaccDotWeb.$ = (query) => {
+	SpaccDotWeb.$ = (query, extra) => ((query.startsWith('<') && query.endsWith('>'))
+		? Object.assign(Object.assign(document.createElement('div'), { innerHTML: query }).querySelector('*'), extra)
+		: SpaccDotWeb.query(query));
+	
+	SpaccDotWeb.query = (query) => {
 		query = query.trim();
 		return (query.startsWith('::')
-			? arrayFrom(document.querySelectorAll(domSpecialQuery(query.slice(2).trim())))
+			? Array.from(document.querySelectorAll(domSpecialQuery(query.slice(2).trim())))
 			: document.querySelector(domSpecialQuery(query))
 		);
-	}
-	
+	};
+
 	function domSpecialQuery (query) {
 		const chars = [];
 		let buffer = [];
 		let brackets = 0;
-		for (const char of query) {
+		for (const char of `${query} `) {
 			if (brackets === 0) {
 				if (buffer.length > 0) {
 					buffer = buffer.join('');
-					if (!buffer.includes('=')) {
+					if (!buffer.includes('=') && (buffer.includes('"') || buffer.includes("'"))) {
 						buffer = `name=${buffer}`;
 					}
 					chars.push(buffer);

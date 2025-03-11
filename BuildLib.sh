@@ -5,7 +5,7 @@ useBuilder(){
 }
 
 buildScript(){
-    useBuilder "Build.BuildScriptFile('$1')"
+    useBuilder "BuildScriptFile('$1')"
 }
 
 for file in ./SpaccDotWeb.js ./SpaccDotWeb.*.js

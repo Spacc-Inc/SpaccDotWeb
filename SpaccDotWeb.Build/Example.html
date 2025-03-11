@@ -31,32 +31,31 @@ alerter("It's a nice day today, innit?");
 </fieldset>
 
 <script>
-    const BuildScript = window.SpaccDotWeb.Build.BuildScript;
+    const Build = window.SpaccDotWeb.Build;
     const $ = (id) => document.getElementById(id);
+    const createElement = (tag, attrs) => Object.assign(document.createElement(tag), attrs);
 
+    // Get the sample script
     const scriptText = $('script').textContent = $('script').textContent.trimEnd();
 
     // Actually build the script
-    const builtScript = BuildScript(scriptText);
+    const builtScript = Build.BuildScript(scriptText);
 
     // Show the build result
     $('compiled').textContent = builtScript.compiled;
     $('minified').textContent = builtScript.minified;
 
-    // Execute the compiled result
-    //setTimeout('eval(builtScript.compiled);', 100);
-
     setTimeout(function(){
-        Array.from(document.querySelectorAll('script')).filter(el => !el.dataset.spaccdotweb).forEach(scriptElement => {
-            scriptElement.textContent = BuildScript(scriptElement.textContent).minified;
+        Build.BuildHtml(document.documentElement.outerHTML, {}).then(html => {
+            $('html').textContent = html;
+            document.querySelector('fieldset.html > span').innerHTML += `, ${html.length}b`;
         });
-        $('html').textContent = `<!DOCTYPE html>\n${document.documentElement.outerHTML}`;
-    }, 100);
+    }, 1);
 
     document.querySelectorAll('fieldset.script').forEach(fieldset => {
         const script = fieldset.querySelector('textarea').textContent;
         fieldset.querySelector('span').innerHTML += `, ${script.length}b`;
-        fieldset.appendChild(Object.assign(document.createElement('button'), {
+        fieldset.appendChild(createElement('button', {
             innerHTML: "Execute",
             onclick: () => eval(script),
         }));

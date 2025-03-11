@@ -2,7 +2,7 @@
 . ./BuildLib.sh
 
 buildHtml(){
-    useBuilder "Build.BuildHtmlFile('$1', { outputFile: '$2' })"
+    useBuilder "BuildHtmlFile('$1', { outputFile: '$2' })"
 }
 
 for example in Server
