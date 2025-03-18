@@ -1,23 +1,49 @@
 package org.eu.spacc.spaccdotweb.android;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
+import android.webkit.ValueCallback;
+import org.eu.spacc.spaccdotweb.android.webview.SpaccWebChromeClient;
 import org.eu.spacc.spaccdotweb.android.webview.SpaccWebView;
 import java.io.File;
 
 public class SpaccWebViewActivity extends Activity {
     protected SpaccWebView webView;
+    public ValueCallback<Uri> fileUploadCallback;
+    public ValueCallback<Uri[]> filesUploadCallback;
 
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
+    @TargetApi(Build.VERSION_CODES.ECLAIR_MR1)
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 //        if (requestCode == Constants.CREATE_FILE_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
 //            Uri fileUri = data.getData();
 //            if (fileUri != null) {
 //                enqueueDownload(Uri.parse(fileUri.toString()));
 //            }
 //        }
-//    }
+        if (requestCode == Constants.ActivityCodes.UPLOAD_FILE.ordinal()) {
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && filesUploadCallback != null) {
+                    filesUploadCallback.onReceiveValue(SpaccWebChromeClient.FileChooserParams.parseResult(resultCode, data));
+                } else if (fileUploadCallback != null) {
+                    fileUploadCallback.onReceiveValue(data.getData());
+                }
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && filesUploadCallback != null) {
+                    filesUploadCallback.onReceiveValue(null);
+                } else if (fileUploadCallback != null) {
+                    fileUploadCallback.onReceiveValue(null);
+                }
+            }
+            fileUploadCallback = null;
+            filesUploadCallback = null;
+        }
+    }
 
     @Override
     public void onBackPressed() {

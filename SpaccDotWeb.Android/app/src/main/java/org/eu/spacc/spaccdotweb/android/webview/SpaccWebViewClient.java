@@ -4,16 +4,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
+
 import org.eu.spacc.spaccdotweb.android.utils.ApiUtils;
 
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 
-public class WebViewClient extends android.webkit.WebViewClient {
+public class SpaccWebViewClient extends WebViewClient {
     private final Context context;
 
-    public WebViewClient(Context context) {
+    public SpaccWebViewClient(Context context) {
         super();
         this.context = context;
     }

@@ -27,3 +27,9 @@ android {
 
     compileSdk 34
 }
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}

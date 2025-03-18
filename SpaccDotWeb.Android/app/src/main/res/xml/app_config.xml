@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <config>
-    <boolean name="allow_javascript">true</boolean>
-    <boolean name="allow_storage">true</boolean>
-
     <AppIndex name="app_index">local</AppIndex> <!-- local or remote -->
     <string name="local_index">index.html</string>
     <string name="remote_index">https://example.com</string>
+    <!-- <string name="standard_font_family"></string> -->
+    <!-- <string name="user_agent"></string> -->
 </config>

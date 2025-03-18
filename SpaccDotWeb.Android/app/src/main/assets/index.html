@@ -27,7 +27,7 @@
     <li><a href="intent://#Intent;action=android.intent.action.VIEW;scheme=http;type=video/mp4;end">intent://</a></li>
 </ul>
 <h3>Files</h3>
-    <p>Upload: <label><input type="file"/></label></p>
+    <p>Upload: <label><input type="file" onchange="(function(f){ alert(f.name + ' ' + f.size + ' ' + f.type); })(this.files[0]);" /></label></p>
     <p>Download:</p>
     <ul>
         <li><a download="Hello World.txt" href="data:text/plain;utf8,Hello World!">data:, .txt</a></li>

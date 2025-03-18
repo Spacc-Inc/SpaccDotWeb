@@ -2,7 +2,8 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:installLocation="auto">
+    android:installLocation="auto"
+    tools:ignore="UnusedAttribute">
 
     <!-- Lets the app access the Internet — not needed for fully offline apps -->
     <!-- <uses-permission android:name="android.permission.INTERNET" /> -->

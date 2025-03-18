@@ -1,5 +1,7 @@
 package org.eu.spacc.spaccdotweb.android;
 
+import android.webkit.WebSettings;
+
 import org.eu.spacc.spaccdotweb.android.Constants.*;
 import org.eu.spacc.spaccdotweb.android.helpers.ConfigReader;
 
@@ -22,6 +24,16 @@ public class Config extends Defaults {
         return (value != null ? value : Defaults.ALLOW_STORAGE);
     }
 
+    public Boolean getAllowZoomControls() {
+        Boolean value = getBoolean("allow_zoom_controls");
+        return (value != null ? value : Defaults.ALLOW_ZOOM_CONTROLS);
+    }
+
+    public Boolean getDisplayZoomControls() {
+        Boolean value = getBoolean("display_zoom_controls");
+        return (value != null ? value : Defaults.DISPLAY_ZOOM_CONTROLS);
+    }
+
     public AppIndex getAppIndex() {
         AppIndex value = (AppIndex)get("app_index");
         return (value != null ? value : Defaults.APP_INDEX);
@@ -36,12 +48,18 @@ public class Config extends Defaults {
         return getString("remote_index");
     }
 
+    public String getStandardFontFamily() {
+        return getString("standard_font_family");
+    }
+
+    public String getUserAgent() {
+        return getString("user_agent");
+    }
+
     private Object get(String key) {
-        if (configReader != null) {
-            return configReader.get(key);
-        } else {
-            return null;
-        }
+        return (configReader != null
+                ? configReader.get(key)
+                : null);
     }
 
     private Boolean getBoolean(String key) {
