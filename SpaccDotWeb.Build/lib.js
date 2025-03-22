@@ -80,7 +80,7 @@ const BuildHtml = async (html, options, files) => {
 	const dom = makeHtmlDom(html);
 	for (const element of dom.querySelectorAll('script, [src], link[rel=stylesheet][href]')) {
 		if (isUrlAbsolute(element.src || element.href)) {
-			return;
+			continue;
 		}
 		if (element.tagName === 'SCRIPT') {
 			const scriptOptions = JSON.parse(element.dataset.spaccdotweb || '{}');
