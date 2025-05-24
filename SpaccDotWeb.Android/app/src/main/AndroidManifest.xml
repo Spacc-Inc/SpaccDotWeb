@@ -6,44 +6,56 @@
     tools:ignore="UnusedAttribute">
 
     <!-- Lets the app access the Internet — not needed for fully offline apps -->
-    <!-- <uses-permission android:name="android.permission.INTERNET" /> -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Needed from Android ??? to 4.4 KitKat (API ???-19) to keep app data on external storage -->
     <!-- Removing these will not break the app, but it will write only on internal storage on those versions -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
 
-    <!-- Additional suggested attributes:
+    <!-- Needed for notifications on Android 13+ (API 33+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Camera access to take photos and record videos -->
+    <!-- <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" /> -->
+
+    <!-- Microphone access to record audio -->
+    <!-- <uses-permission android:name="android.permission.RECORD_AUDIO" /> -->
+
+    <!-- Additional suggested attributes for <application>:
         android:appCategory=["accessibility" | "audio" | "game" | "image" | "maps" | "news" | "productivity" | "social" | "video"]
         android:isGame=["true" | "false"]
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:usesCleartextTraffic=["true" | "false"]
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar" // to disable the ActionBar
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar.Fullscreen" // to put the app in Fullscreen
     -->
     <application
         android:name=".MainApplication"
         android:label="@string/app_name"
-        android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
         android:resizeableActivity="true"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:hasFragileUserData="true"
         android:supportsRtl="true"
+        android:hardwareAccelerated="true"
         android:hasCode="true"
         tools:targetApi="34">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:configChanges="orientation|keyboardHidden|screenSize|screenLayout|layoutDirection"
+            android:configChanges="density|fontScale|orientation|keyboard|keyboardHidden|screenSize|smallestScreenSize|uiMode|screenLayout|layoutDirection"
             android:launchMode="singleTask">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
+
     </application>
 </manifest>

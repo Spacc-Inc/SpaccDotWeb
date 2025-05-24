@@ -7,9 +7,10 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.webkit.ValueCallback;
+import java.io.File;
+
 import org.eu.spacc.spaccdotweb.android.webview.SpaccWebChromeClient;
 import org.eu.spacc.spaccdotweb.android.webview.SpaccWebView;
-import java.io.File;
 
 public class SpaccWebViewActivity extends Activity {
     protected SpaccWebView webView;

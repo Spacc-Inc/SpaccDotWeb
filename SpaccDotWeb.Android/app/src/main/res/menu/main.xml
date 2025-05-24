@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/reload" android:title="@string/reload_menu" />
+    <item android:id="@+id/stop" android:title="@string/stop_loading_menu" />
+    <item android:id="@+id/backwards" android:title="@string/backwards_menu" />
+    <item android:id="@+id/forward" android:title="@string/forward_menu" />
+    <item android:id="@+id/open_externally" android:title="@string/open_externally_menu" />
+    <item android:id="@+id/copy_url" android:title="@string/copy_url_menu" />
+    <item android:id="@+id/exec_script" android:title="@string/execute_javascript_menu" />
+    <item android:id="@+id/hide" android:title="@string/hide_menu" />
+    <item android:id="@+id/exit" android:title="@string/exit_menu" />
+    <item android:id="@+id/about_app" android:title="@string/about_app_menu" />
+</menu>

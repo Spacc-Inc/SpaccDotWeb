@@ -14,14 +14,19 @@ public class ApiUtils {
         }
     }
 
+    public static Boolean isInternalUrl(Uri url) {
+        return url.toString().startsWith("file:///android_asset/");
+    }
+
     public static void openOrShareUrl(Context context, Uri url) {
-        try {
-            // Open the URL externally
-            context.startActivity(new Intent(Intent.ACTION_VIEW, url));
-        } catch (ActivityNotFoundException ignored) {
-            // No app can handle it, so share it instead
-            context.startActivity(new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, url.toString()));
+        if (!isInternalUrl(url)) {
+            try { // Open the URL externally
+                context.startActivity(new Intent(Intent.ACTION_VIEW, url));
+                return;
+            } catch (ActivityNotFoundException ignored) {}
         }
+        // No app can handle it, so share it instead
+        context.startActivity(new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, url.toString()));
     }
 
     public static void writeToClipboard(Context context, String text) {

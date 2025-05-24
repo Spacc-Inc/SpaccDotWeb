@@ -6,6 +6,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.webkit.CookieManager;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -65,6 +66,24 @@ public class FileUtils {
         if (deleteRoot) {
             rootDir.delete();
         }
+    }
+
+    /* https://gist.github.com/defHLT/3ac50c765f3cf289da03 */
+    public static String inputStreamToString(InputStream inputStream) {
+        String res = null;
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        byte[] b = new byte[1];
+        try {
+            while (inputStream.read(b) != -1) {
+                outputStream.write(b);
+            }
+            res = outputStream.toString();
+            inputStream.close();
+            outputStream.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return res;
     }
 
     // TODO: Handle downloads internally on old Android versions

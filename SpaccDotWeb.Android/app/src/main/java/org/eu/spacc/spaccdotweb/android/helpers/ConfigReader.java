@@ -5,8 +5,9 @@ import android.content.res.XmlResourceParser;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import org.eu.spacc.spaccdotweb.android.Constants.*;
 import org.xmlpull.v1.XmlPullParserException;
+
+import org.eu.spacc.spaccdotweb.android.Constants.*;
 
 public class ConfigReader {
     private final Map<String, Object> configData = new HashMap<>();

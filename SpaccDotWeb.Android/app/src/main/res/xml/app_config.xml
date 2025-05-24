@@ -1,8 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <config>
+    <!-- <string name="about_page">https://example.com/apps/TheApp</string> --> <!-- replace or leave empty -->
+
     <AppIndex name="app_index">local</AppIndex> <!-- local or remote -->
     <string name="local_index">index.html</string>
-    <string name="remote_index">https://example.com</string>
+    <string name="remote_index">https://example.com/</string>
+
+    <boolean name="allow_javascript">true</boolean>
+    <boolean name="allow_storage">true</boolean>
+    <boolean name="allow_autoplay">true</boolean>
+    <boolean name="allow_drm_media">true</boolean>
+    <boolean name="allow_audio_capture">false</boolean>
+    <boolean name="allow_video_capture">false</boolean>
+
+    <boolean name="allow_zoom_controls">false</boolean>
+    <boolean name="display_zoom_controls">false</boolean>
+
     <!-- <string name="standard_font_family"></string> -->
     <!-- <string name="user_agent"></string> -->
 </config>

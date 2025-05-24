@@ -1,6 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE resources [
+    <!ENTITY about_app "Informazioni App">
+    <!ENTITY exit "Esci">
+    <!ENTITY hide "Nascondi">
+    <!ENTITY reload "Ricarica">
+    <!ENTITY stop_loading "Ferma Caricamento">
+    <!ENTITY backwards "Indietro">
+    <!ENTITY forward "Avanti">
+    <!ENTITY open "Apri">
+    <!ENTITY open_externally "&open; Esternamente">
+    <!ENTITY copy_url "Copia URL">
+    <!ENTITY execute_javascript "Esegui JavaScript">
+]>
 <resources>
-    <string name="exit">Esci</string>
+    <string name="about_app">&about_app;</string>
+    <string name="about_app_menu">ℹ️ &about_app;</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="cancel">Cancel</string>
+    <string name="exit">&exit;</string>
+    <string name="exit_menu">🚪 &exit;</string>
+    <string name="hide">&hide;</string>
+    <string name="hide_menu">🕳️ &hide;</string>
     <string name="move_app_data">Sposta Dati App</string>
     <string name="move_app_data_info">La app è stata trasferita su una diversa locazione di archiviazione. I dati saranno spostati ora.</string>
+    <string name="loading">Caricamento</string>
+    <string name="reload">&reload;</string>
+    <string name="reload_menu">🔄 &reload;</string>
+    <string name="stop_loading">&stop_loading;</string>
+    <string name="stop_loading_menu">🛑 &stop_loading;</string>
+    <string name="backwards">&backwards;</string>
+    <string name="backwards_menu">⏮️ &backwards;</string>
+    <string name="forward">&forward;</string>
+    <string name="forward_menu">⏭️ &forward;</string>
+    <string name="open">&open;</string>
+    <string name="open_menu">👌 &open;</string>
+    <string name="open_externally">&open_externally;</string>
+    <string name="open_externally_menu">☝️ &open_externally;</string>
+    <string name="copy_url">&copy_url;</string>
+    <string name="copy_url_menu">🔗 &copy_url;</string>
+    <string name="execute_javascript">&execute_javascript;</string>
+    <string name="execute_javascript_menu">🔣 &execute_javascript;</string>
 </resources>

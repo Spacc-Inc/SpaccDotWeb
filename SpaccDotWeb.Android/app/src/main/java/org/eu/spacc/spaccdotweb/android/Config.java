@@ -1,7 +1,5 @@
 package org.eu.spacc.spaccdotweb.android;
 
-import android.webkit.WebSettings;
-
 import org.eu.spacc.spaccdotweb.android.Constants.*;
 import org.eu.spacc.spaccdotweb.android.helpers.ConfigReader;
 
@@ -14,6 +12,10 @@ public class Config extends Defaults {
         this.configReader = configReader;
     }
 
+    public String getAboutPage() {
+        return getString("about_page");
+    }
+
     public Boolean getAllowJavascript() {
         Boolean value = getBoolean("allow_javascript");
         return (value != null ? value : Defaults.ALLOW_JAVASCRIPT);
@@ -22,6 +24,26 @@ public class Config extends Defaults {
     public Boolean getAllowStorage() {
         Boolean value = getBoolean("allow_storage");
         return (value != null ? value : Defaults.ALLOW_STORAGE);
+    }
+
+    public Boolean getAllowAutoplay() {
+        Boolean value = getBoolean("allow_autoplay");
+        return (value != null ? value : Defaults.ALLOW_AUTOPLAY);
+    }
+
+    public Boolean getAllowDrmMedia() {
+        Boolean value = getBoolean("allow_drm_media");
+        return (value != null ? value : Defaults.ALLOW_DRM_MEDIA);
+    }
+
+    public Boolean getAllowAudioCapture() {
+        Boolean value = getBoolean("allow_audio_capture");
+        return (value != null ? value : Defaults.ALLOW_AUDIO_CAPTURE);
+    }
+
+    public Boolean getAllowVideoCapture() {
+        Boolean value = getBoolean("allow_video_capture");
+        return (value != null ? value : Defaults.ALLOW_VIDEO_CAPTURE);
     }
 
     public Boolean getAllowZoomControls() {

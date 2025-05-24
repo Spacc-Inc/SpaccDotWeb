@@ -1,22 +1,35 @@
 package org.eu.spacc.spaccdotweb.android.webview;
 
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.eu.spacc.spaccdotweb.android.Config;
 import org.eu.spacc.spaccdotweb.android.Constants;
 import org.eu.spacc.spaccdotweb.android.SpaccWebViewActivity;
+import org.eu.spacc.spaccdotweb.android.utils.ApiUtils;
 
 public class SpaccWebChromeClient extends WebChromeClient {
     private final SpaccWebViewActivity activity;
+    private Config config;
 
     public SpaccWebChromeClient(SpaccWebViewActivity activity) {
         super();
         this.activity = activity;
+    }
+
+    public void applyConfig(Config config) {
+        this.config = config;
     }
 
     // TODO: Android < 4 support
@@ -36,5 +49,28 @@ public class SpaccWebChromeClient extends WebChromeClient {
         intent.setType("*/*");
         activity.fileUploadCallback = valueCallback;
         activity.startActivityForResult(Intent.createChooser(intent, null), Constants.ActivityCodes.UPLOAD_FILE.ordinal());
+    }
+
+    @Override
+    public void onPermissionRequest(PermissionRequest request) {
+        AtomicBoolean handled = new AtomicBoolean(false);
+        ApiUtils.apiRun(21, () -> {
+            ArrayList<String> granted = new ArrayList<>();
+            for (String resource: request.getResources()) {
+                if ((resource.equals(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID) && config.getAllowDrmMedia()) ||
+                    (resource.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE) && config.getAllowAudioCapture()) ||
+                    (resource.equals(PermissionRequest.RESOURCE_VIDEO_CAPTURE) && config.getAllowVideoCapture())
+                ) {
+                    granted.add(resource);
+                }
+            }
+            if (!granted.isEmpty()) {
+                request.grant(granted.toArray(new String[0]));
+                handled.set(true);
+            }
+        });
+        if (!handled.get()) {
+            super.onPermissionRequest(request);
+        }
     }
 }
