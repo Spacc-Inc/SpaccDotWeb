@@ -1,0 +1,59 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    // Adjust namespace and defaultConfig very following based on the application to ship
+
+    namespace 'com.example.spaccwebviewapplication'
+
+    defaultConfig {
+        applicationId 'com.example.spaccwebviewapplication'
+        versionCode 1
+        versionName '1.0'
+        minSdk 1
+        targetSdk 35
+        compileSdk 35
+    }
+
+    signingConfigs {
+        release {
+            def Properties localProps = new Properties()
+            def Properties keyProps = new Properties()
+            localProps.load(new FileInputStream(file('../local.properties')))
+            keyProps.load(new FileInputStream(file('../keystore.properties')))
+            storeFile file(localProps['storeFile'])
+            storePassword keyProps['storePassword']
+            keyPassword keyProps['keyPassword']
+            keyAlias keyProps['keyAlias']
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.dbg'
+            versionNameSuffix '.debug'
+            signingConfig signingConfigs.debug
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+dependencies {
+    implementation project(":SpaccWebView")
+}

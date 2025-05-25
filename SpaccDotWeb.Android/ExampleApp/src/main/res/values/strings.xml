@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE resources [
+    <!ENTITY about_app "About App">
+    <!ENTITY exit "Exit">
+    <!ENTITY hide "Hide">
+    <!ENTITY reload "Reload">
+    <!ENTITY stop_loading "Stop Loading">
+    <!ENTITY backwards "Backwards">
+    <!ENTITY forward "Forward">
+    <!ENTITY open "Open">
+    <!ENTITY open_externally "&open; Externally">
+    <!ENTITY copy_url "Copy URL">
+    <!ENTITY execute_javascript "Execute JavaScript">
+]>
+<resources>
+    <string name="app_name" translatable="false">SpaccWebView Application</string>
+</resources>
